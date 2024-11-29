@@ -35,6 +35,13 @@
 		"vitest": "^2.0.4"
 	},
 	"dependencies": {
+		"@cartamd/plugin-attachment": "^4.1.1",
+		"@cartamd/plugin-code": "^4.0.6",
+		"@cartamd/plugin-emoji": "^4.2.1",
+		"@cartamd/plugin-math": "^4.2.1",
+		"@cartamd/plugin-slash": "^4.1.2",
+		"carta-md": "^4.6.7",
+		"katex": "^0.16.11",
 		"svelte-routing": "^2.13.0"
 	}
 }

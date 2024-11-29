@@ -19,3 +19,19 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Frontend
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+frontend/.env
+
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.env
+*.pyc
+
+# General
+.DS_Store

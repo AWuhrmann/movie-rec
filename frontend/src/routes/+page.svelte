@@ -9,8 +9,8 @@
     $: unratedMovies = $movies.filter(movie => movie.rating === 0);
   </script>
   
-  <main class="container mx-auto p-4">
-    <div class="flex justify-between items-center mb-6">
+  <main class="container mx-auto p-4 border border-gray-300 p-4 rounded">
+    <div class="flex justify-between items-center mb-6 ">
       <h1 class="text-3xl font-bold">Movie Ratings</h1>
       <ResetRatings />
     </div>
