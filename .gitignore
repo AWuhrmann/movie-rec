@@ -9,8 +9,9 @@ backend/Data/*
 # Output
 .output
 .vercel
-/.svelte-kit
+**/.svelte-kit
 /build
+
 
 # OS
 .DS_Store
