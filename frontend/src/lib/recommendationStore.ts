@@ -2,6 +2,7 @@
 import { get, writable } from 'svelte/store';
 import type { Movie } from '../types/movie';
 import { movies } from './movieStore';
+import { fetchMovieDetails } from './api/imdb';
 
 interface JobStatus {
   id: string;
@@ -9,6 +10,7 @@ interface JobStatus {
   results?: Movie[];
   error?: string;
 }
+
 
 async function startRecommendationJob(ratings: Array<{imdb_id: string, rating: number}>, algorithm: string) {
   const response = await fetch('http://localhost:8000/api/recommendations/start', {
@@ -25,6 +27,13 @@ async function checkJobStatus(jobId: string) {
   const response = await fetch(`http://localhost:8000/api/recommendations/status/${jobId}`);
   if (!response.ok) throw new Error('Failed to check job status');
   return response.json();
+}
+
+async function enrichRecommendationStore(movieIds: string[]): Promise<Movie[]> {
+  const movieInfos = await Promise.all(
+    movieIds.map(id => fetchMovieDetails(id))
+  );
+  return movieInfos.filter((movie): movie is Movie => movie !== null)
 }
 
 function createRecommendationStore() {
@@ -51,10 +60,13 @@ function createRecommendationStore() {
           pollInterval = window.setInterval(async () => {
             try {
               const status = await checkJobStatus(jobId);
-              
+              console.log(status.status)
               if (status.status === 'completed') {
                 clearInterval(pollInterval!);
-                set(status.results);
+                console.log(status.results);
+                const movieNames = await enrichRecommendationStore(status.results)
+
+                set(movieNames);
                 resolve(status.results);
               } else if (status.status === 'failed') {
                 clearInterval(pollInterval!);

@@ -1,5 +1,9 @@
 node_modules
 
+# Data
+**/*.csv
+**/*.npy
+
 # Output
 .output
 .vercel

@@ -78,3 +78,37 @@ export async function searchMovies(query: string): Promise<Movie[]> {
     return [];
   }
 }
+
+export async function fetchMovieDetails(imdbId: string): Promise<Movie | null> {
+  try {
+    // Create URL for direct ID lookup
+    const detailUrl = `${BASE_URL}?apikey=${OMDB_API_KEY}&i=${encodeURIComponent(imdbId)}`;
+    console.log('Fetching details for:', imdbId);
+
+    const response = await fetch(detailUrl);
+    const movieData: OMDBDetailResponse = await response.json();
+
+    // Check if we got a valid response
+    if (movieData.Response === "True") {
+      return {
+        id: movieData.imdbID,
+        title: movieData.Title,
+        rating: 0,
+        genre: movieData.Genre,
+        year: movieData.Year,
+        poster: movieData.Poster !== "N/A" ? movieData.Poster : null,
+        plot: movieData.Plot,
+        imdbRating: movieData.imdbRating,
+        // Add any other required fields from your Movie type
+        tmdbId: 0 // If you need this, you'll need to get it from another source
+      };
+    }
+
+    console.log('No valid movie data found for:', imdbId);
+    return null;
+
+  } catch (error) {
+    console.error('Error fetching movie details for', imdbId, ':', error);
+    return null;
+  }
+}

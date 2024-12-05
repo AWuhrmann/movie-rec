@@ -13,7 +13,7 @@ class MovieRecommendation(BaseModel):
 
 class JobStatus(BaseModel):
     status: str
-    results: Optional[List[MovieRecommendation]] = None
+    results: Optional[List[str]] = None
     error: Optional[str] = None
 
 class AlgorithmType(Enum):
