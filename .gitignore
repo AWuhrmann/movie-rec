@@ -3,6 +3,8 @@ node_modules
 # Data
 **/*.csv
 **/*.npy
+**/*.npz
+backend/Data/*
 
 # Output
 .output
