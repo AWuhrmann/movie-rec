@@ -7,16 +7,13 @@ import os
 
 app = FastAPI()
 
-# In production with Apache, you might not need CORS at all
-# but if you want to keep it for development:
-if os.getenv("ENVIRONMENT") == "development":
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["http://localhost:5173"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://ada.wuhrmann.art"],  # Your Svelte site
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include routers
 app.include_router(recommendations.router, prefix="/api")
