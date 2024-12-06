@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.endpoints import recommendations
 from app.services.recommendation_engine import init_data, init_data
+import os
 
 app = FastAPI()
 
