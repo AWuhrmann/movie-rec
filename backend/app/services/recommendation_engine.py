@@ -86,12 +86,10 @@ def init_data(app):
     
         data_folder = './Data/'
         #paths to files
-        file_path = data_folder + 'df_filtered.csv'
+        file_path = data_folder + 'df_optimized.csv'
 
         # load the data
-        df= pd.read_csv(file_path, index_col=0)
-        # Dropping this column because hopefully the final dataframe of ratings in the project won't have it
-        df.drop('movieId', axis=1, inplace=True)
+        df= pd.read_csv('./Data/df_optimized.csv', index_col=0)
 
         # Generate unique new IDs for movies globally
         movie_mapping = {old_id: new_id for new_id, old_id in enumerate(df['imdbId'].unique(), start=0)}
