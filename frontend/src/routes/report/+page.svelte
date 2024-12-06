@@ -8,6 +8,7 @@
     import { slash } from '@cartamd/plugin-slash';
     import { code } from '@cartamd/plugin-code';
 	import CountUp from '../../components/CountUp.svelte';
+	import GraphComponent from '../../components/GraphComponent.svelte';
 
     //import '$lib/styles/github.scss';
 
@@ -47,6 +48,8 @@
         </div>
       </div>
     </section>
+
+    <GraphComponent></GraphComponent>
   
     <section id="ratings" class="mb-16">
       <h2 class="text-2xl font-bold mb-6">Ratings Analysis</h2>
