@@ -2,12 +2,7 @@ import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.endpoints import recommendations
-from app.services.recommendation_engine import init_data
-import resource
-import os
-
-# Set resource limit
-resource.setrlimit(resource.RLIMIT_AS, (2**32, 2**32))  # 1GB limit
+from app.services.recommendation_engine import init_data, init_datay
 
 app = FastAPI()
 
@@ -25,11 +20,9 @@ if os.getenv("ENVIRONMENT") == "development":
 # Include routers
 app.include_router(recommendations.router, prefix="/api")
 
-# Initialize data
-def init_data(app: FastAPI):
-    # Your initialization code here
-    pass
-
 if __name__ == "__main__":
-    init_data(app)
+    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+init_data(app)
