@@ -13,7 +13,7 @@ interface JobStatus {
 
 
 async function startRecommendationJob(ratings: Array<{imdb_id: string, rating: number}>, algorithm: string) {
-  const response = await fetch('http://localhost:8000/api/recommendations/start', {
+  const response = await fetch('/api/recommendations/start', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ratings, algorithm })
@@ -24,7 +24,7 @@ async function startRecommendationJob(ratings: Array<{imdb_id: string, rating: n
 }
 
 async function checkJobStatus(jobId: string) {
-  const response = await fetch(`http://localhost:8000/api/recommendations/status/${jobId}`);
+  const response = await fetch(`/api/recommendations/status/${jobId}`);
   if (!response.ok) throw new Error('Failed to check job status');
   return response.json();
 }
