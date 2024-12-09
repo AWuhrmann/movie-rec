@@ -26,11 +26,22 @@
       Plotly.newPlot(plotDiv, [{
         x: x,
         y: z,
-        mode: 'markers'
+        mode: 'markers',
+        
       }], {
-        xaxis: {range: [-40, 40]},
-        yaxis: {range: [0, 60]}
-      });
+        xaxis: {range: [-40, 40],
+          visible: false,
+          showgrid: false
+        },
+        yaxis: {range: [0, 60],
+          visible: false,
+          showgrid: false
+        },
+        paper_bgcolor : 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)'
+
+      }, {staticPlot: true,
+        });
       
       // Compute new positions using Lorenz equations
       function compute() {

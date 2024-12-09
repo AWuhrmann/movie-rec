@@ -26,31 +26,23 @@
  * ```
  */
 declare module '$env/static/private' {
-	export const VITE_IMDB_API_KEY: string;
-	export const VITE_API_URL: string;
-	export const GJS_DEBUG_TOPICS: string;
+	export const NODE_ENV: string;
+	export const ALLOW_EDIT: string;
 	export const LESSOPEN: string;
 	export const USER: string;
 	export const npm_config_user_agent: string;
 	export const XDG_SESSION_TYPE: string;
-	export const GIT_ASKPASS: string;
 	export const npm_node_execpath: string;
 	export const SHLVL: string;
 	export const npm_config_noproxy: string;
 	export const HOME: string;
-	export const CHROME_DESKTOP: string;
 	export const OLDPWD: string;
-	export const TERM_PROGRAM_VERSION: string;
 	export const DESKTOP_SESSION: string;
 	export const NVM_BIN: string;
 	export const npm_package_json: string;
 	export const NVM_INC: string;
-	export const GIO_LAUNCHED_DESKTOP_FILE: string;
 	export const GNOME_SHELL_SESSION_MODE: string;
 	export const GTK_MODULES: string;
-	export const VSCODE_GIT_ASKPASS_MAIN: string;
-	export const VSCODE_GIT_ASKPASS_NODE: string;
-	export const MANAGERPID: string;
 	export const npm_config_userconfig: string;
 	export const npm_config_local_prefix: string;
 	export const SYSTEMD_EXEC_PID: string;
@@ -58,13 +50,12 @@ declare module '$env/static/private' {
 	export const DBUS_SESSION_BUS_ADDRESS: string;
 	export const npm_config_engine_strict: string;
 	export const COLORTERM: string;
-	export const GIO_LAUNCHED_DESKTOP_FILE_PID: string;
 	export const COLOR: string;
+	export const GNOME_KEYRING_CONTROL: string;
 	export const NVM_DIR: string;
 	export const DEBUGINFOD_URLS: string;
 	export const IM_CONFIG_PHASE: string;
 	export const LOGNAME: string;
-	export const JOURNAL_STREAM: string;
 	export const _: string;
 	export const npm_config_prefix: string;
 	export const npm_config_npm_version: string;
@@ -78,12 +69,11 @@ declare module '$env/static/private' {
 	export const npm_config_node_gyp: string;
 	export const PATH: string;
 	export const SESSION_MANAGER: string;
-	export const INVOCATION_ID: string;
 	export const NODE: string;
 	export const npm_package_name: string;
 	export const XDG_MENU_PREFIX: string;
+	export const GNOME_TERMINAL_SCREEN: string;
 	export const XDG_RUNTIME_DIR: string;
-	export const GDK_BACKEND: string;
 	export const DISPLAY: string;
 	export const LANG: string;
 	export const XDG_CURRENT_DESKTOP: string;
@@ -91,11 +81,9 @@ declare module '$env/static/private' {
 	export const XDG_SESSION_DESKTOP: string;
 	export const XAUTHORITY: string;
 	export const LS_COLORS: string;
-	export const VSCODE_GIT_IPC_HANDLE: string;
-	export const TERM_PROGRAM: string;
+	export const GNOME_TERMINAL_SERVICE: string;
 	export const npm_lifecycle_script: string;
 	export const SSH_AUTH_SOCK: string;
-	export const ORIGINAL_XDG_CURRENT_DESKTOP: string;
 	export const SHELL: string;
 	export const npm_package_version: string;
 	export const npm_lifecycle_event: string;
@@ -103,9 +91,6 @@ declare module '$env/static/private' {
 	export const GDMSESSION: string;
 	export const LESSCLOSE: string;
 	export const GPG_AGENT_INFO: string;
-	export const GJS_DEBUG_OUTPUT: string;
-	export const VIRTUAL_ENV: string;
-	export const VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 	export const QT_IM_MODULE: string;
 	export const npm_config_globalconfig: string;
 	export const npm_config_init_module: string;
@@ -118,9 +103,10 @@ declare module '$env/static/private' {
 	export const QTWEBENGINE_DICTIONARIES_PATH: string;
 	export const npm_command: string;
 	export const MEMORY_PRESSURE_WRITE: string;
+	export const VTE_VERSION: string;
 	export const INIT_CWD: string;
 	export const EDITOR: string;
-	export const NODE_ENV: string;
+	export const VITE_USER_NODE_ENV: string;
 }
 
 /**
@@ -152,31 +138,23 @@ declare module '$env/static/public' {
  */
 declare module '$env/dynamic/private' {
 	export const env: {
-		VITE_IMDB_API_KEY: string;
-		VITE_API_URL: string;
-		GJS_DEBUG_TOPICS: string;
+		NODE_ENV: string;
+		ALLOW_EDIT: string;
 		LESSOPEN: string;
 		USER: string;
 		npm_config_user_agent: string;
 		XDG_SESSION_TYPE: string;
-		GIT_ASKPASS: string;
 		npm_node_execpath: string;
 		SHLVL: string;
 		npm_config_noproxy: string;
 		HOME: string;
-		CHROME_DESKTOP: string;
 		OLDPWD: string;
-		TERM_PROGRAM_VERSION: string;
 		DESKTOP_SESSION: string;
 		NVM_BIN: string;
 		npm_package_json: string;
 		NVM_INC: string;
-		GIO_LAUNCHED_DESKTOP_FILE: string;
 		GNOME_SHELL_SESSION_MODE: string;
 		GTK_MODULES: string;
-		VSCODE_GIT_ASKPASS_MAIN: string;
-		VSCODE_GIT_ASKPASS_NODE: string;
-		MANAGERPID: string;
 		npm_config_userconfig: string;
 		npm_config_local_prefix: string;
 		SYSTEMD_EXEC_PID: string;
@@ -184,13 +162,12 @@ declare module '$env/dynamic/private' {
 		DBUS_SESSION_BUS_ADDRESS: string;
 		npm_config_engine_strict: string;
 		COLORTERM: string;
-		GIO_LAUNCHED_DESKTOP_FILE_PID: string;
 		COLOR: string;
+		GNOME_KEYRING_CONTROL: string;
 		NVM_DIR: string;
 		DEBUGINFOD_URLS: string;
 		IM_CONFIG_PHASE: string;
 		LOGNAME: string;
-		JOURNAL_STREAM: string;
 		_: string;
 		npm_config_prefix: string;
 		npm_config_npm_version: string;
@@ -204,12 +181,11 @@ declare module '$env/dynamic/private' {
 		npm_config_node_gyp: string;
 		PATH: string;
 		SESSION_MANAGER: string;
-		INVOCATION_ID: string;
 		NODE: string;
 		npm_package_name: string;
 		XDG_MENU_PREFIX: string;
+		GNOME_TERMINAL_SCREEN: string;
 		XDG_RUNTIME_DIR: string;
-		GDK_BACKEND: string;
 		DISPLAY: string;
 		LANG: string;
 		XDG_CURRENT_DESKTOP: string;
@@ -217,11 +193,9 @@ declare module '$env/dynamic/private' {
 		XDG_SESSION_DESKTOP: string;
 		XAUTHORITY: string;
 		LS_COLORS: string;
-		VSCODE_GIT_IPC_HANDLE: string;
-		TERM_PROGRAM: string;
+		GNOME_TERMINAL_SERVICE: string;
 		npm_lifecycle_script: string;
 		SSH_AUTH_SOCK: string;
-		ORIGINAL_XDG_CURRENT_DESKTOP: string;
 		SHELL: string;
 		npm_package_version: string;
 		npm_lifecycle_event: string;
@@ -229,9 +203,6 @@ declare module '$env/dynamic/private' {
 		GDMSESSION: string;
 		LESSCLOSE: string;
 		GPG_AGENT_INFO: string;
-		GJS_DEBUG_OUTPUT: string;
-		VIRTUAL_ENV: string;
-		VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 		QT_IM_MODULE: string;
 		npm_config_globalconfig: string;
 		npm_config_init_module: string;
@@ -244,9 +215,10 @@ declare module '$env/dynamic/private' {
 		QTWEBENGINE_DICTIONARIES_PATH: string;
 		npm_command: string;
 		MEMORY_PRESSURE_WRITE: string;
+		VTE_VERSION: string;
 		INIT_CWD: string;
 		EDITOR: string;
-		NODE_ENV: string;
+		VITE_USER_NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}

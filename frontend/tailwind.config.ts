@@ -1,4 +1,5 @@
 import aspectRatio from '@tailwindcss/aspect-ratio';
+import typography from '@tailwindcss/typography'
 import type { Config } from 'tailwindcss';
 
 export default {
@@ -8,5 +9,6 @@ export default {
 		extend: {}
 	},
 
-	plugins: [aspectRatio]
+	plugins: [aspectRatio, typography
+	]
 } satisfies Config;

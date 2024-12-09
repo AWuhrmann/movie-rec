@@ -1,6 +1,7 @@
 <!-- routes/report/+layout.svelte -->
 <script lang="ts">
-    const sections = [
+  
+  const sections = [
       { id: 'overview', title: 'Overview', href: '/report#overview' },
       { id: 'ratings', title: 'Ratings Analysis', href: '/report#ratings' },
       { id: 'trends', title: 'Rating Trends', href: '/report#trends' },
@@ -12,6 +13,7 @@
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+    
   }
 
   
