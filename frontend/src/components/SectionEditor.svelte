@@ -34,6 +34,7 @@ const saveStatus: Writable<SaveStatus> = writable({
 });
 
 async function loadSections() {
+  console.log('try calling server !');
     const response = await fetch('/api/report/sections');
     const data = await response.json();
     sections = data.sections;
