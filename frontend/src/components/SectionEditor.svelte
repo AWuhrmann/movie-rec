@@ -35,14 +35,14 @@ const saveStatus: Writable<SaveStatus> = writable({
 
 async function loadSections() {
   console.log('try calling server !');
-    const response = await fetch('/api/report/sections');
+    const response = await fetch('/save/api/report/sections');
     const data = await response.json();
     sections = data.sections;
     isEditable = data.editable;
 }
 
 async function loadContent() {
-    const response = await fetch(`/api/report/content?section=${sectionName}`);
+    const response = await fetch(`/save/api/report/content?section=${sectionName}`);
     const data = await response.json();
     isEditable = data.editable;
     return data.content;
@@ -54,7 +54,7 @@ async function saveContent(content: string): Promise<void> {
     try {
         saveStatus.set({ saving: true, lastSaved: null, error: null });
         
-        const response = await fetch('/api/report/save', {
+        const response = await fetch('/save/api/report/save', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
