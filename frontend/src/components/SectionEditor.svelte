@@ -88,8 +88,6 @@ onMount(async () => {
     try {
         await loadSections();
         const content = await loadContent();
-        console.log(content);
-        
         if (editorRef) {
             editorInstance = await createEditor(editorRef, content);
             
