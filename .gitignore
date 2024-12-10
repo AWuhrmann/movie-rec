@@ -43,3 +43,4 @@ backend/.env
 # General
 .DS_Store
 frontend/data/*
+frontend/.svelte-kit/*

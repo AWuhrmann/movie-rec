@@ -11,7 +11,8 @@
 	import GraphComponent from '../../components/GraphComponent.svelte';
 
 	import SectionEditor from '../../components/SectionEditor.svelte';
-
+	import Diagram from '../../components/Diagram.svelte';
+	import TSne from '../../components/tSNE.svelte';
     //import '$lib/styles/github.scss';
 
     const carta = new Carta({
@@ -53,32 +54,31 @@
         </div>
       </div>
     </section>
-
     
-    <GraphComponent></GraphComponent>
-  <div class="prose max-w-6xl">
-
-    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+    <div class="prose max-w-6xl">
+      
+      <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       
       <section id="introduction">
         
         <h2>Introduction</h2>
         
         <SectionEditor sectionName='introduction' />
-    </section>
+      </section>
     </div>
-    
+  
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
-      
+    
       <section id="recommendations-algorithms">
         
         <h2>Content-based recommendation</h2>
   
         <SectionEditor sectionName='content-based-recommendations' />
-
-      <h2 class="collab-filtering">Collaborative filtering</h2>
+        
+        <TSne></TSne>
+        <h2 class="collab-filtering">Collaborative filtering</h2>
   
-      <SectionEditor sectionName='collaborative-filtering' />
+        <SectionEditor sectionName='collaborative-filtering' />
       
     </section>
   </div>
