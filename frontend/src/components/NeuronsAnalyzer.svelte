@@ -141,8 +141,8 @@
 
     // Set up our projection and path generator
     const projection = d3.geoMercator()
-      .scale(110)
-      .center([-50, 40])
+      .scale(140)
+      .center([-20, 60])
       .translate([widthMap / 2, heightMap / 2]);
 
     const path = d3.geoPath().projection(projection);
@@ -256,10 +256,10 @@
   }
 
   // Set up our constants
-  const widthMap = 500;
-  const heightMap = 200;
-  const widthAct = 500;
-  const heightAct = 200;
+  const widthMap = 600;
+  const heightMap = 100;
+  const widthAct = 600;
+  const heightAct = 100;
 
   // Use Svelte's onMount to start loading data when component mounts
   onMount(() => {
@@ -307,7 +307,7 @@
     <!-- Search Section -->
     
     <div class="search-section">
-      <h2 class="section-title">Enter neuron number</h2>
+      <h3 class="section-title">Enter neuron number</h3>
       <input 
       type="number" bind:value={currentNeuron}
         placeholder="Search..." 
@@ -318,7 +318,7 @@
     <!-- Movies Grid -->
     <div>
 
-      <h2 class="section-title">Movies</h2> <!-- Added title -->
+      <h3 class="section-title mb-0">Movies</h3> <!-- Added title -->
       <div class="movies-grid">
         {#if isLoadingMovies}
         <div class="loading-state">
@@ -344,7 +344,7 @@
   <div class="right-column">
     <!-- Map Container -->
     <div class="map-section">
-      <h2 class="section-title">Language correlation</h2>
+      <h3 class="section-title">Language correlation</h3>
       {#if isLoading}
         <div class="loading-state">Loading map data...</div>
       {:else if error}
@@ -356,7 +356,7 @@
 
     <!-- Activation Container -->
     <div class="activation-section">
-      <h2 class="section-title">Feature correlation</h2>
+      <h3 class="section-title">Feature correlation</h3>
       {#if isLoading}
         <div class="loading-state">Loading map data...</div>
       {:else if error}
@@ -369,13 +369,13 @@
 </div>
 
 <style>
-  h2 {
+  h3 {
     margin-top: 0px;
   }
 
   .grid-container {
     display: grid;
-    grid-template-columns: 1fr 2fr; /* Two equal columns */
+    grid-template-columns: 40% 60%;
     gap: 2rem;
     padding: 2rem;
   }
@@ -383,7 +383,7 @@
   .left-column {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    
   }
 
   .search-section {
@@ -395,8 +395,6 @@
     grid-template-columns: repeat(2, 1fr); /* 2x2 grid */
     gap: 1rem;
     overflow-y: auto;
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
 
   }
 
@@ -419,7 +417,7 @@
 
   .right-column {
     display: grid;
-    grid-template-rows: 1fr 1fr; /* Two equal rows */
+    /* grid-template-rows: 60% 40%; Two equal rows */
     gap: 1.5rem;
   }
 
@@ -430,11 +428,15 @@
     padding: 1rem;
     min-height: 0; /* Prevents overflow issues */
     width: 100%;
-    height: 300px; /* or whatever fixed height you want */
     /* or use a percentage of the viewport */
-    /* height: 40vh; */
     position: relative;
     overflow: hidden; /* This prevents any overflow */
+  }
+  .map-section {
+    height: 450px;
+  }
+  .activation-section {
+    height: 250px;
   }
 
   .loading-state,

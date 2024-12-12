@@ -62,15 +62,23 @@
       
       <section id="introduction">
         
-        <!-- <NeuronsAnalyzer></NeuronsAnalyzer> -->
-
+        
         <h2>Introduction</h2>
         
         <SectionEditor sectionName='introduction' />
-
+        
       </section>
+      
+      
+      
+      
     </div>
-  
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+      <h2>Interactive Neuron Analyzer</h2>
+      <NeuronsAnalyzer></NeuronsAnalyzer>
+    </div>
+
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
     
       <section id="recommendations-algorithms">
