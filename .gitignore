@@ -44,3 +44,4 @@ backend/.env
 .DS_Store
 frontend/data/*
 frontend/.svelte-kit/*
+frontend/.svelte-kit/ambient.d.ts

@@ -1,8 +1,0 @@
-{
-	"/": [],
-	"/api/report/[action]": [
-		"src/routes/api/report/[action]/+server.ts"
-	],
-	"/report": [],
-	"/test": []
-}
