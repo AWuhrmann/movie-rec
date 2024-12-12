@@ -4,7 +4,7 @@ import { writable, type Writable } from 'svelte/store';
 import { Editor, rootCtx, defaultValueCtx } from '@milkdown/kit/core';
 import { commonmark } from '@milkdown/kit/preset/commonmark';
 import { nord } from '@milkdown/theme-nord';
-import { math } from '@milkdown/plugin-math';
+import { katexOptionsCtx, math } from '@milkdown/plugin-math';
 import { listener, listenerCtx } from '@milkdown/plugin-listener';
 import type { Editor as MilkdownEditor } from '@milkdown/core';
 
@@ -116,20 +116,23 @@ onDestroy(() => {
     
     function createEditor(dom: HTMLDivElement, initialContent: string = ''): Promise<MilkdownEditor> {
       return Editor.make()
-        .config((ctx) => {
-          ctx.set(rootCtx, dom);
-          ctx.set(defaultValueCtx, initialContent);
-        })
-        .use(commonmark)
-        .use(math)
+      .use(commonmark)
+      .use(math)
         .use(listener)
         .config((ctx) => {
-          ctx.get(listenerCtx).markdownUpdated((_, markdown, prevMarkdown) => {
-            if (markdown !== prevMarkdown) {
-              editorContent.set(markdown);
-            }
+          ctx.set(katexOptionsCtx.key, {         throwOnError: false, // Don't throw on parsing errors
+            errorColor: '#BF616A', // Nord red color
+            strict: false, // Be less strict about syntax
+            trust: true // Allow more commands
           });
-        })
+          ctx.set(rootCtx, dom);
+          ctx.set(defaultValueCtx, initialContent);
+          ctx.get(listenerCtx).markdownUpdated((_, markdown, prevMarkdown) => {
+          if (markdown !== prevMarkdown) {
+            editorContent.set(markdown);
+          }
+        });
+      })
         .create();
     }
     
