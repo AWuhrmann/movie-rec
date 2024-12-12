@@ -12,6 +12,7 @@
 
 	import SectionEditor from '../../components/SectionEditor.svelte';
 	import Diagram from '../../components/Diagram.svelte';
+	import NeuronsAnalyzer from '../../components/NeuronsAnalyzer.svelte';
 	import TSne from '../../components/tSNE.svelte';
     //import '$lib/styles/github.scss';
 
@@ -61,9 +62,12 @@
       
       <section id="introduction">
         
+        <!-- <NeuronsAnalyzer></NeuronsAnalyzer> -->
+
         <h2>Introduction</h2>
         
         <SectionEditor sectionName='introduction' />
+
       </section>
     </div>
   

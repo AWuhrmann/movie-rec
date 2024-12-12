@@ -29,7 +29,7 @@ async function checkJobStatus(jobId: string) {
   return response.json();
 }
 
-async function enrichRecommendationStore(movieIds: string[]): Promise<Movie[]> {
+export async function enrichRecommendationStore(movieIds: string[]): Promise<Movie[]> {
   const movieInfos = await Promise.all(
     movieIds.map(id => fetchMovieDetails(id))
   );
