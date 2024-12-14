@@ -8,9 +8,12 @@
   let colorBy = 'Genres';
   let isLoading = true;
   let error = null;
+  let container;
 
-  const width = 800;
-  const height = 600;
+  let width;
+  let height;
+  const aspectRatio = 800 / 600; // Original aspect ratio
+
   const margin = { top: 20, right: 20, bottom: 40, left: 40 };
 
   onMount(async () => {
@@ -26,12 +29,35 @@
       error = e.message;
       isLoading = false;
     }
+
+    const cleanup = setupResizeObserver();
+      
+      return () => {
+        cleanup();
+      };
+
   });
 
     onMount(() => {
       drawVisualization();
     });
   
+      // Resize observer to handle container width changes
+  function setupResizeObserver() {
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        width = entry.contentRect.width;
+        height = width / aspectRatio;
+        if (data.length > 0) {
+          drawVisualization();
+        }
+      }
+    });
+    
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }
+
     function drawVisualization() {
       const svgElement = d3.select(svg);
   
@@ -104,36 +130,39 @@
     }
   </script>
   
-  
-{#if isLoading}
-<div>Loading...</div>
-{:else if error}
-<div class="error">Error: {error}</div>
-{:else}
-<div class="visualization-container">
-  <div class="buttons">
-    <button 
-      class:active={colorBy === 'Genres'} 
-      on:click={() => colorBy = 'Genres'}
-    >
-      Color by Genre
-    </button>
-    <button 
-      class:active={colorBy === 'Country'} 
-      on:click={() => colorBy = 'Country'}
-    >
-      Color by Country
-    </button>
-  </div>
-  
-  <svg 
-    bind:this={svg} 
-    {width} 
-    {height}
-  ></svg>
+<div class="max-w-300px" bind:this={container}>
+  {#if isLoading}
+    <div>Loading...</div>
+  {:else if error}
+    <div class="error">Error: {error}</div>
+  {:else}
+    <div class="visualization-container">
+      <div class="buttons">
+        <button 
+          class:active={colorBy === 'Genres'} 
+          on:click={() => colorBy = 'Genres'}
+        >
+        Color by Genre
+        </button>
+        <button 
+          class:active={colorBy === 'Country'} 
+          on:click={() => colorBy = 'Country'}
+        >
+        Color by Country
+        </button>
+      </div>
+    
+      <svg 
+        bind:this={svg}
+        {width}
+        {height}
+        viewBox="0 0 {width} {height}"
+        preserveAspectRatio="xMidYMid meet"
+        class="w-full h-auto"
+      ></svg>
+    </div>
+  {/if}
 </div>
-{/if}
-  
   <style>
     .visualization-container {
       margin: 20px;

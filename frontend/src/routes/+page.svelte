@@ -1,49 +1,227 @@
 <script lang="ts">
-    import MovieSearch from '../components/MovieSearch.svelte';
-    import MovieCard from '../components/MovieCard.svelte';
-    import RatedMovieList from '../components/RatedMovieList.svelte';
-    import Recommendations from '../components/Recommendations.svelte';
-    import ResetRatings from '../components/ResetRatings.svelte';
     import { movies } from '$lib/movieStore';
+    import 'katex/dist/katex.css';
+
+    import { Carta, Markdown } from 'carta-md';
+    import { math } from '@cartamd/plugin-math';
+    import { emoji } from '@cartamd/plugin-emoji';
+    import { slash } from '@cartamd/plugin-slash';
+    import { code } from '@cartamd/plugin-code';
+	import CountUp from '../components/CountUp.svelte';
+	import GraphComponent from '../components/GraphComponent.svelte';
+
+	import SectionEditor from '../components/SectionEditor.svelte';
+	import Diagram from '../components/Diagram.svelte';
+	import NeuronsAnalyzer from '../components/NeuronsAnalyzer.svelte';
+	import TSne from '../components/tSNE.svelte';
+	import InfiniteMovieScroll from '../components/InfiniteMovieScroll.svelte';
+	import type { Movie } from '../types/movie';
+    //import '$lib/styles/github.scss';
+
+    const carta = new Carta({
+      sanitizer: false,
+      extensions: [
+        emoji(),
+        slash(),
+        code(),
+        math()
+      ]
+    });
+
+  	export let value = `
+    # this is a test
+    hey
+    $x + 2 = 0$`;
+    
+    $: totalMovies = $movies.length;
+    $: ratedMovies = $movies.filter(m => m.rating > 0).length;
+    $: averageRating = $movies.reduce((acc, m) => acc + m.rating, 0) / ratedMovies || 0;
   
-    $: unratedMovies = $movies.filter(movie => movie.rating === 0);
+    const sampleMovies: Movie[] = [
+    {
+      id: "1",
+      title: "Inception",
+      rating: 0,
+      genre: "Sci-Fi",
+      year: "2010",
+      poster: "/posters/inception.jpg",
+      posterPath: null,
+      tmdbId: 1,
+      plot: "A thief who enters the dreams of others",
+      imdbRating: "8.8"
+    },
+    {
+      id: "2",
+      title: "The Matrix",
+      rating: 0,
+      genre: "Sci-Fi",
+      year: "1999",
+      poster:"/posters/thematrix.jpg",
+      posterPath: null,
+      tmdbId: 2,
+      plot: "A computer programmer discovers a mysterious world",
+      imdbRating: "8.7"
+    },
+    {
+      id: "3",
+      title: "Pulp Fiction",
+      rating: 0,
+      genre: "Crime",
+      year: "1994",
+      poster: "/posters/pulpfiction.jpg",
+      posterPath: null,
+      tmdbId: 3,
+      plot: "Various interconnected stories in Los Angeles",
+      imdbRating: "8.9"
+    },
+    {
+      id: "4",
+      title: "The Godfather",
+      rating: 0,
+      genre: "Crime",
+      year: "1972",
+      poster: "/posters/godfather.jpg",
+      posterPath: null,
+      tmdbId: 4,
+      plot: "The aging patriarch of a crime dynasty",
+      imdbRating: "9.2"
+    },
+    {
+      id: "5",
+      title: "Interstellar",
+      rating: 0,
+      genre: "Sci-Fi",
+      year: "2014",
+      poster: "/posters/interstellar.jpg",
+      posterPath: null,
+      tmdbId: 5,
+      plot: "Astronauts travel through a wormhole",
+      imdbRating: "8.6"
+    },
+    {
+      id: "6",
+      title: "The Dark Knight",
+      rating: 0,
+      genre: "Action",
+      year: "2008",
+      poster: "/posters/thedarkknight.jpg",
+      posterPath: null,
+      tmdbId: 6,
+      plot: "Batman faces his greatest challenge",
+      imdbRating: "9.0"
+    }
+  ];
+
   </script>
   
-  <main class="container mx-auto p-4 border border-gray-300 p-4 rounded">
-    <div class="flex justify-between items-center mb-6 ">
-      <h1 class="text-3xl font-bold">Movie Ratings</h1>
-      <ResetRatings />
+<div class="prose max-w-none">
+    <h1 class="text-3xl font-bold mb-8">Skibidata - Recommendation algorithms</h1>
+    
+      <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+      
+        <section id="introduction">
+        
+        <h2>Introduction</h2>
+        
+        <SectionEditor sectionName='introduction' />
+        
+      </section>
+      
     </div>
     
-    <MovieSearch />
     
-    <div class="flex gap-6 mt-6">
-      <!-- Left column - Rated Movies -->
-      <div class="flex-none">
-        <RatedMovieList />
-      </div>
-  
-      <!-- Center column - Movie Cards -->
-      <div class="flex-1">
-        <div class="grid gap-4">
-          {#each unratedMovies as movie (movie.id)}
-            <MovieCard {movie} />
-          {/each}
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+      
+      <section id="content-based">
+        
+        <h2>Content-based recommendation</h2>
+      </section>
+      <SectionEditor sectionName='content-based-recommendations' />
+        
+      <TSne></TSne>
+      
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+      <h2>Interactive Neuron Analyzer</h2>
+      <NeuronsAnalyzer></NeuronsAnalyzer>
+    </div>
+    <div class="">
+      <section id="overview" class="mb-16">
+        <div class="grid grid-cols-3 gap-6 mb-8">
+          
+          <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h3 class="text-gray-500 mb-2">Total Movies</h3>
+            <p class="text-3xl font-bold"><CountUp endValue={342}/></p>
+          </div>
+          
+          <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h3 class="text-gray-500 mb-2">Rated Movies</h3>
+            <p class="text-3xl font-bold">{ratedMovies}</p>
+          </div>
+          
+          <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h3 class="text-gray-500 mb-2">Average Rating</h3>
+            <p class="text-3xl font-bold">{averageRating.toFixed(1)}</p>
+          </div>
         </div>
-      </div>
-  
-      <!-- Right column - Recommendations -->
-      <div class="flex-none">
-        <Recommendations />
-      </div>
+      </section>
+
+    <InfiniteMovieScroll 
+      movies={sampleMovies}
+      speed={1}
+      direction="left"
+      gap={20}
+    />
+
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12 mt-12">
+
+        <h2 class="collab-filtering">Collaborative filtering</h2>
+        <section id="collaborative">
+          
+          <SectionEditor sectionName='collaborative-filtering' />
+          
+        </section>
     </div>
-  </main>
-  
+    
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+    <section id="implementation">
+      
+      <h2>Implementation</h2>
+      
+      <SectionEditor sectionName='implementation' />
+      </section>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+      <section id="conclusion">
+        
+        <h2>Conclusion</h2>
+        
+        <SectionEditor sectionName='conclusion' />
+        </section>
+      </div>
+  </div>
+</div>
+
   <style>
-    :global(body) {
-      @apply bg-gray-50 m-0 p-0;
+    h1 {
+      @apply mt-0 mb-4 font-bold text-5xl mb-12;
     }
-    .container {
-      @apply max-w-7xl;
+
+    h2 {
+      @apply mt-0 mb-4 font-bold text-2xl;
+    }
+    h3 {
+      @apply mt-0;
+    }
+    .collab-filtering {
+      @apply mt-8;
+    }
+
+    /* Add these styles to ensure proper content positioning */
+    :global(body) {
+      margin: 0;
+      padding: 0;
     }
   </style>
