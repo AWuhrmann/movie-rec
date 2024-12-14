@@ -1,3 +1,4 @@
+import { checkIfMovieInDB, fuzzyFindMoviesFromDB } from "$lib/recommendationStore";
 import type { Movie } from "../../types/movie";
 
 const OMDB_API_KEY = import.meta.env.VITE_IMDB_API_KEY;
@@ -30,49 +31,59 @@ interface OMDBDetailResponse {
 
 export async function searchMovies(query: string): Promise<Movie[]> {
   try {
-    const searchUrl = `${BASE_URL}?apikey=${OMDB_API_KEY}&s=${encodeURIComponent(query)}`;
-    console.log('Search URL:', searchUrl); // For debugging
+    // Get matching movies from your database
+    const dbMovies: DBMovie[] = await fuzzyFindMoviesFromDB(query);
     
-    const searchResponse = await fetch(searchUrl);
-    const searchData: OMDBSearchResponse = await searchResponse.json();
-    
-    if (searchData.Response === "False" || !searchData.Search) {
-      console.log("No results found");
+    if (!dbMovies.length) {
+      console.log('No movies found in database for query:', query);
       return [];
     }
 
-    // Get detailed info for each movie
-    const movies = await Promise.all(
-      searchData.Search.slice(0, 5).map(async (item) => {
-        try {
-          const detailUrl = `${BASE_URL}?apikey=${OMDB_API_KEY}&i=${item.imdbID}`;
-          console.log('Detail URL:', detailUrl); // For debugging
-          
-          const detailResponse = await fetch(detailUrl);
-          const movieData: OMDBDetailResponse = await detailResponse.json();
-          
-          if (movieData.Response === "True") {
-            return {
-              id: movieData.imdbID,
-              title: movieData.Title,
-              rating: 0,
-              genre: movieData.Genre,
-              year: movieData.Year,
-              poster: movieData.Poster !== "N/A" ? movieData.Poster : null,
-              plot: movieData.Plot,
-              imdbRating: movieData.imdbRating
-            };
-          }
-          return null;
-        } catch (error) {
-          console.error('Error fetching movie details:', error);
-          return null;
-        }
-      })
-    );
+    console.log(dbMovies);
 
-    // Filter out any null values from failed requests
-    return movies.filter((movie): movie is Movie => movie !== null);
+    // Fetch detailed information for each movie
+    const movieDetailsPromises = dbMovies.map(async (dbMovie) => {
+      try {
+        const movieDetails = await fetchMovieDetails(dbMovie.imdb_id);
+        if (movieDetails) {
+          return movieDetails;
+        } else {
+          // Fallback to basic info from database if API fetch fails
+          return {
+            id: dbMovie.imdb_id,
+            title: dbMovie.title,
+            rating: 0,
+            genre: '',
+            year: '',
+            poster: null,
+            plot: '',
+            imdbRating: 0,
+            tmdbId: 0
+          };
+        }
+      } catch (error) {
+        // If there's any error, return basic info from database
+        console.error(`Error fetching details for ${dbMovie.title}:`, error);
+        return {
+          id: dbMovie.imdb_id,
+          title: dbMovie.title,
+          rating: 0,
+          genre: '',
+          year: '',
+          poster: null,
+          plot: '',
+          imdbRating: 0,
+          tmdbId: 0
+        };
+      }
+    });
+
+    // Wait for all movie details to be fetched
+    const movies = await Promise.all(movieDetailsPromises);
+    
+    console.log(`Found ${movies.length} movies for query: ${query}`);
+    return movies;
+
   } catch (error) {
     console.error('Error in searchMovies:', error);
     return [];

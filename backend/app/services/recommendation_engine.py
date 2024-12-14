@@ -6,8 +6,10 @@ import pandas as pd
 import numpy as np
 import scipy
 from sklearn.neighbors import NearestNeighbors
+from app.models.SparseSVDRecommender import SparseSVDRecommender
 from fastapi import FastAPI
 import os
+from thefuzz import fuzz, process
 
 ratings_sparse = None
 data_folder = './app/'
@@ -16,8 +18,11 @@ movie_metadata_path = data_folder + 'movie.metadata.tsv'
 
 df = None
 movie_mapping = None
+reverse_movie_mapping = None
 user_mapping = None
 sparse_matrix_rep = None
+movie_names = None
+recommender = None
 
 app = FastAPI()
 
@@ -41,6 +46,45 @@ def weighted_rating(R, v, m, C):
 
 def inverse_imdb_transform(imdb):
     return int(imdb[2:])
+
+
+def init_data(app):
+    @app.on_event("startup")
+    async def load_datasets():
+        global user_mapping, movie_mapping, df, sparse_matrix_rep, movie_names, recommender, reverse_movie_mapping
+        # Load datasets once when the server starts
+        
+        print(os.getcwd())
+    
+        data_folder = './Data/'
+
+        movie_names = pd.read_csv('./Data/movie_names.csv', index_col=0)
+
+        # load the data
+        df= pd.read_csv('./Data/df_optimized.csv', index_col=0)
+
+        # Generate unique new IDs for movies globally
+        movie_mapping = {old_id: new_id for new_id, old_id in enumerate(df['imdbId'].unique(), start=0)}
+        reverse_movie_mapping = {new_id: old_id for new_id, old_id in enumerate(df['imdbId'].unique(), start=0)}
+
+        # Add the new_movieId column using the global mapping
+        df['new_movieId'] = df['imdbId'].map(movie_mapping)
+
+        # Generate unique new IDs for user globally
+        user_mapping = {old_id: new_id for new_id, old_id in enumerate(df['userId'].unique(), start=0)}
+
+        # Add the new_userId column using the global mapping
+        df['new_userId'] = df['userId'].map(user_mapping)
+    
+        sparse_matrix_rep= scipy.sparse.load_npz("./Data/Sparse_hyperspace_user_movie.npz")
+
+        # ------------------------------ SVD ------------------------------------ # 
+
+        recommender = SparseSVDRecommender()
+    
+        recommender.load_model('Data/sample_svd_model14.joblib')
+
+# ------------------------------------------ ALGO ------------------------------------------------
 
 def recommand_movies_for_website_user(ratings: List[Rating], n_neighbors=2, n_movies= 2) :
     global merged_df, df_more_reduced, sparse_matrix_rep
@@ -76,34 +120,31 @@ def recommand_movies_for_website_user(ratings: List[Rating], n_neighbors=2, n_mo
 
     return final_rec_df['imdbId'].apply(formating_imdbId).values
 
-def init_data(app):
-    @app.on_event("startup")
-    async def load_datasets():
-        global user_mapping, movie_mapping, df, sparse_matrix_rep
-        # Load datasets once when the server starts
-        
-        print(os.getcwd())
+def SVD_recommendation(ratings: List[Rating]):
     
-        data_folder = './Data/'
-        #paths to files
-        file_path = data_folder + 'df_optimized.csv'
+    try:
 
-        # load the data
-        df= pd.read_csv('./Data/df_optimized.csv', index_col=0)
+        ratings = [[inverse_imdb_transform(rating.imdb_id), rating.rating] for rating in ratings]
 
-        # Generate unique new IDs for movies globally
-        movie_mapping = {old_id: new_id for new_id, old_id in enumerate(df['imdbId'].unique(), start=0)}
+        new_ratings_df = pd.DataFrame(ratings, columns=['original_movie_id', 'rating'])
+        new_ratings_df['original_movie_id'] = new_ratings_df['original_movie_id']
 
-        # Add the new_movieId column using the global mapping
-        df['new_movieId'] = df['imdbId'].map(movie_mapping)
+        new_ratings_df['sparse_movie_id'] = new_ratings_df['original_movie_id'].map(movie_mapping)
+        ratings_to_pass_df = new_ratings_df.drop(columns=['original_movie_id'])
 
-        # Generate unique new IDs for user globally
-        user_mapping = {old_id: new_id for new_id, old_id in enumerate(df['userId'].unique(), start=0)}
+        recommendations = recommender.handle_new_user(ratings_to_pass_df, n_items=5)
 
-        # Add the new_userId column using the global mapping
-        df['new_userId'] = df['userId'].map(user_mapping)
-    
-        sparse_matrix_rep= scipy.sparse.load_npz("./Data/Sparse_hyperspace_user_movie.npz")
+        ids = [formating_imdbId(reverse_movie_mapping[id]) for id, _ in recommendations[:5]]
+
+        results = [MovieRecommendation(id=id, title=movie_names[movie_names['imdb_id'] == id]['title'].values[0]) for id in ids]
+
+        print(f'SVD Result : {results}')
+
+        return results
+
+    except Exception as e:
+        print(e)
+
 
 def content_based_filtering(ratings: List[Rating]) -> List[MovieRecommendation]:
     recommendations = ["tt0073195", "tt0078788"]
@@ -115,6 +156,46 @@ def hybrid_recommendations(ratings: List[Rating]) -> List[MovieRecommendation]:
     
     return recommendations
 
+
+async def check_if_in(job_id: str, movies: List[str]):
+    try:
+        isIn = []
+        for movie in movies:
+            if movie in movie_mapping:
+                isIn.append(movie)
+    except Exception as e:
+        JobStore.update_job(job_id, 
+                            JobStatus('failed', error=str(e)))
+
+async def find_movie(query: str, threshold):
+    try:
+        print('Start job', query, type(query))
+        choices = movie_names['title'] # dict(zip(movie_names['title'], df.index))
+        print(f'Got choices', list(choices.items())[:10])
+        matches = process.extractBests(
+            query,
+            choices,
+            limit=10,
+        )
+        print('Extracted best matches', matches)
+
+        if not matches:
+            results = []
+        else:
+            matched_indices = [match[2] for match in matches]
+            result_df = movie_names.loc[matched_indices].copy()
+            result_df['similarity_score'] = [match[1] for match in matches]
+            results = result_df.sort_values('similarity_score', ascending=False)
+        
+        print(results)
+        
+        return [{"title": row.title, "imdb_id": row.imdb_id} for row in results.itertuples()]
+
+    except Exception as e:
+        print(e)
+        return []
+
+
 async def generate_recommendations(job_id: str, ratings: List[Rating], algorithm: AlgorithmType):
     try:
         recommendations = []
@@ -124,12 +205,16 @@ async def generate_recommendations(job_id: str, ratings: List[Rating], algorithm
             recommendations = content_based_filtering(ratings)
         elif algorithm == AlgorithmType.HYBRID:
             recommendations = hybrid_recommendations(ratings)
-        
+        elif algorithm == AlgorithmType.SVD:
+            print('start svd')
+            recommendations = SVD_recommendation(ratings)
+
         JobStore.update_job(
             job_id,
             JobStatus(status="completed", results=recommendations)
         )
     except Exception as e:
+        print(e)
         JobStore.update_job(
             job_id,
             JobStatus(status="failed", error=str(e))

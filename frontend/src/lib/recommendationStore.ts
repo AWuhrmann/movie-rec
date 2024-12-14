@@ -4,6 +4,8 @@ import type { Movie } from '../types/movie';
 import { movies } from './movieStore';
 import { fetchMovieDetails } from './api/imdb';
 
+const LOCAL_URL = import.meta.env.VITE_LOCAL_URL;
+
 interface JobStatus {
   id: string;
   status: 'pending' | 'completed' | 'failed';
@@ -13,7 +15,7 @@ interface JobStatus {
 
 
 async function startRecommendationJob(ratings: Array<{imdb_id: string, rating: number}>, algorithm: string) {
-  const response = await fetch('/api/recommendations/start', {
+  const response = await fetch(`${LOCAL_URL}/api/recommendations/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ratings, algorithm })
@@ -23,8 +25,28 @@ async function startRecommendationJob(ratings: Array<{imdb_id: string, rating: n
   return response.json();
 }
 
+export async function checkIfMovieInDB(movies: string[]) {
+  const response = await fetch(`${LOCAL_URL}/api/movies/check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ movies })
+  });
+
+  if (!response.ok) throw new Error('Failed to check if movies were in the db');
+  return response.json();
+
+}
+
+export async function fuzzyFindMoviesFromDB(title: string) {
+  const response = await fetch(`${LOCAL_URL}/api/movies/find/${title}`);
+
+  if (!response.ok) throw new Error('Failed to check if movies were in the db');
+  return response.json();
+
+}
+
 async function checkJobStatus(jobId: string) {
-  const response = await fetch(`/api/recommendations/status/${jobId}`);
+  const response = await fetch(`${LOCAL_URL}/api/recommendations/status/${jobId}`);
   if (!response.ok) throw new Error('Failed to check job status');
   return response.json();
 }
@@ -63,11 +85,24 @@ function createRecommendationStore() {
               console.log(status.status)
               if (status.status === 'completed') {
                 clearInterval(pollInterval!);
-                console.log(status.results);
-                const movieNames = await enrichRecommendationStore(status.results)
+                console.log('Results:', status.results);
 
-                set(movieNames);
-                resolve(status.results);
+                // Create an array to store all movies
+                const recommendedMovies: Movie[] = status.results.map(res => ({
+                    id: res.id,
+                    title: res.title,
+                    rating: 0,
+                    genre: '',
+                    year: '',
+                    poster: null,
+                    plot: '',
+                    imdbRating: 0,
+                    tmdbId: 0
+                }));
+
+                // Set all movies at once
+                set(recommendedMovies);
+                resolve(recommendedMovies);
               } else if (status.status === 'failed') {
                 clearInterval(pollInterval!);
                 reject(new Error(status.error || 'Job failed'));

@@ -9,7 +9,7 @@ interface StoredMovie {
 }
 
 // Function to safely access localStorage
-function getLocalStorage() {
+export function getLocalStorage() {
   if (typeof window !== 'undefined') {
     return window.localStorage;
   }
@@ -43,6 +43,8 @@ function saveRatedMovies(movies: Movie[]): void {
 function createMovieStore() {
   // Load rated movies from localStorage
   const storedMovies = loadRatedMovies();
+
+
   const { subscribe, set, update } = writable<Movie[]>([]);
 
   return {

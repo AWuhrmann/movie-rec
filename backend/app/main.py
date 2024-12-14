@@ -7,9 +7,11 @@ import os
 
 app = FastAPI()
 
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://ada.wuhrmann.art"],  # Your Svelte site
+    allow_origins=["https://ada.wuhrmann.art", "http://localhost:5173", "http://127.0.0.1:5173"],  # Your Svelte site
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

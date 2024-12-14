@@ -4,20 +4,23 @@ import { writable, type Writable } from 'svelte/store';
 import { Editor, rootCtx, defaultValueCtx } from '@milkdown/kit/core';
 import { commonmark } from '@milkdown/kit/preset/commonmark';
 import { nord } from '@milkdown/theme-nord';
+import { gfm } from '@milkdown/kit/preset/gfm';
 import { katexOptionsCtx, math } from '@milkdown/plugin-math';
 import { listener, listenerCtx } from '@milkdown/plugin-listener';
-import type { Editor as MilkdownEditor } from '@milkdown/core';
+import type { Config, Editor as MilkdownEditor } from '@milkdown/core';
+	import type { MilkdownPlugin } from '@milkdown/ctx';
+
 
 interface SaveStatus {
-    saving: boolean;
-    lastSaved: string | null;
-    error: string | null;
+  saving: boolean;
+  lastSaved: string | null;
+  error: string | null;
 }
 
 interface Section {
-    name: string;
-    content: string;
-    lastModified: string;
+  name: string;
+  content: string;
+  lastModified: string;
 }
 
 export let sectionName = 'default';
@@ -31,17 +34,17 @@ const saveStatus: Writable<SaveStatus> = writable({
     saving: false, 
     lastSaved: null,
     error: null 
-});
-
+  });
+  
 async function loadSections() {
   console.log('try calling server !');
     const response = await fetch('/save/api/report/sections');
     const data = await response.json();
     sections = data.sections;
     isEditable = data.editable;
-}
+  }
 
-async function loadContent() {
+  async function loadContent() {
     const response = await fetch(`/save/api/report/content?section=${sectionName}`);
     const data = await response.json();
     isEditable = data.editable;
@@ -57,35 +60,40 @@ async function saveContent(content: string): Promise<void> {
         const response = await fetch('/save/api/report/save', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({ content, section: sectionName }),
         });
-
+        
         const data = await response.json();
-
+        
         if (!response.ok || !data.success) {
             throw new Error(data.message || 'Failed to save content');
-        }
+          }
 
         saveStatus.set({ 
-            saving: false, 
-            lastSaved: new Date().toISOString(),
-            error: null 
+          saving: false, 
+          lastSaved: new Date().toISOString(),
+          error: null 
         });
-    } catch (error) {
+      } catch (error) {
         console.error('Error saving content:', error);
         saveStatus.set({ 
-            saving: false, 
+          saving: false, 
             lastSaved: null,
             error: error instanceof Error ? error.message : 'Failed to save changes'
-        });
+          });
     }
-}
+  }
+  
+  const debouncedSave = debounce(saveContent, 1000);
 
-const debouncedSave = debounce(saveContent, 1000);
+  onMount(async () => {
+    
+  // const { tableBlock } = await import('@milkdown/kit/component/table-block');
+  // const {configureLinkTooltip, linkTooltipPlugin } = await import('@milkdown/kit/component/link-tooltip');
 
-onMount(async () => {
+  
     try {
         await loadSections();
         const content = await loadContent();

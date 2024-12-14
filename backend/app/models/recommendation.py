@@ -13,14 +13,18 @@ class MovieRecommendation(BaseModel):
 
 class JobStatus(BaseModel):
     status: str
-    results: Optional[List[str]] = None
+    results: Optional[List[MovieRecommendation]] = None
     error: Optional[str] = None
 
 class AlgorithmType(Enum):
     COLLABORATIVE = "collaborative"
     CONTENT_BASED = "content_based"
     HYBRID = "hybrid"
+    SVD="svd"
 
 class RecommendationRequest(BaseModel):
     ratings: List[Rating]
     algorithm: AlgorithmType = AlgorithmType.COLLABORATIVE  # Default algorithm
+
+class MovieRequest(BaseModel):
+    movies: List[str] # List of movie imdb_ids.

@@ -36,31 +36,12 @@
     $: averageRating = $movies.reduce((acc, m) => acc + m.rating, 0) / ratedMovies || 0;
   </script>
   
-  <div class="max-w-6xl prose">
-    <section id="overview" class="mb-16">
-      <h1 class="text-3xl font-bold mb-8">Movie Ratings Report</h1>
-      <div class="grid grid-cols-3 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <h3 class="text-gray-500 mb-2">Total Movies</h3>
-          
-        <p class="text-3xl font-bold"><CountUp endValue={342}/></p>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <h3 class="text-gray-500 mb-2">Rated Movies</h3>
-          <p class="text-3xl font-bold">{ratedMovies}</p>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <h3 class="text-gray-500 mb-2">Average Rating</h3>
-          <p class="text-3xl font-bold">{averageRating.toFixed(1)}</p>
-        </div>
-      </div>
-    </section>
+  <div class="prose max-w-6xl ">
+    <h1 class="text-3xl font-bold mb-8">Skibidata - Recommendation algorithms</h1>
     
-    <div class="prose max-w-6xl">
-      
       <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       
-      <section id="introduction">
+        <section id="introduction">
         
         
         <h2>Introduction</h2>
@@ -69,45 +50,78 @@
         
       </section>
       
-      
-      
-      
     </div>
     
+    
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
-      <h2>Interactive Neuron Analyzer</h2>
-      <NeuronsAnalyzer></NeuronsAnalyzer>
+      
+      <section id="content-based">
+        
+        <h2>Content-based recommendation</h2>
+      </section>
+      <SectionEditor sectionName='content-based-recommendations' />
+        
+      <TSne></TSne>
+      
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+        <h2>Interactive Neuron Analyzer</h2>
+        <NeuronsAnalyzer></NeuronsAnalyzer>
+      </div>
+      <div class="max-w-6xl prose">
+        <section id="overview" class="mb-16">
+          <div class="grid grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+              <h3 class="text-gray-500 mb-2">Total Movies</h3>
+              
+              <p class="text-3xl font-bold"><CountUp endValue={342}/></p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+              <h3 class="text-gray-500 mb-2">Rated Movies</h3>
+              <p class="text-3xl font-bold">{ratedMovies}</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+              <h3 class="text-gray-500 mb-2">Average Rating</h3>
+              <p class="text-3xl font-bold">{averageRating.toFixed(1)}</p>
+            </div>
+          </div>
+    </section>
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+
+        <h2 class="collab-filtering">Collaborative filtering</h2>
+        <section id="collaborative">
+          
+          <SectionEditor sectionName='collaborative-filtering' />
+          
+        </section>
+    </div>
+    
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+    <section id="implementation">
+      
+      <h2>Implementation</h2>
+      
+      <SectionEditor sectionName='implementation' />
+      </section>
     </div>
 
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
-    
-      <section id="recommendations-algorithms">
+      <section id="conclusion">
         
-        <h2>Content-based recommendation</h2>
-  
-        <SectionEditor sectionName='content-based-recommendations' />
+        <h2>Conclusion</h2>
         
-        <TSne></TSne>
-        <h2 class="collab-filtering">Collaborative filtering</h2>
-  
-        <SectionEditor sectionName='collaborative-filtering' />
-      
-    </section>
-  </div>
-  
-  
-  <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
-    <section id="introduction">
-  
-      <h2>Implementation</h2>
-    
-        <SectionEditor sectionName='implementation' />
-      </section>
-    </div>
+        <SectionEditor sectionName='conclusion' />
+        </section>
+      </div>
   </div>
 </div>
 
   <style>
+    h1 {
+      @apply mt-0 mb-4 font-bold text-5xl mb-12;
+    }
+
     h2 {
       @apply mt-0 mb-4 font-bold text-2xl;
     }

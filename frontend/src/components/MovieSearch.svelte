@@ -22,6 +22,8 @@
 
   async function handleSearch() {
     const trimmedSearch = searchTerm.trim();
+
+    console.log(ratedMovies);
     
     // Don't search if:
     // 1. Empty search term (reset to all movies instead)
@@ -51,7 +53,7 @@
       }
       
       const combinedResults = [
-        ...ratedMovies,
+        //...ratedMovies,
         ...results.filter(movie => !ratedMovies.some(rated => rated.id === movie.id))
       ];
       

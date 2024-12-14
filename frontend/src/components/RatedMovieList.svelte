@@ -1,14 +1,21 @@
 <!-- RatedMovieList.svelte -->
 <script lang="ts">
-    import { movies } from '$lib/movieStore';
+    import { movies, getLocalStorage } from '$lib/movieStore';
     import StarRating from './StarRating.svelte';
     import type { Movie } from '../types/movie';
+	import { onMount } from 'svelte';
   
     $: ratedMovies = $movies.filter(movie => movie.rating > 0);
   
     function handleRemove(movieId: string) {
       movies.removeRating(movieId);
     }
+
+    onMount(() => {
+      getLocalStorage();
+      movies.set([]);
+    });
+
   </script>
   
   <div class="w-64 bg-white rounded-lg shadow-md p-4">

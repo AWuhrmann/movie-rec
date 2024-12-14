@@ -1,7 +1,8 @@
+from typing import Optional
 from app.services.job_stores import JobStore
 from fastapi import APIRouter, BackgroundTasks
-from app.models.recommendation import RecommendationRequest, JobStatus
-from app.services.recommendation_engine import generate_recommendations
+from app.models.recommendation import MovieRequest, RecommendationRequest, JobStatus
+from app.services.recommendation_engine import check_if_in, find_movie, generate_recommendations
 import uuid
 import logging
 
@@ -31,7 +32,41 @@ async def start_recommendations(
 
 @router.get("/recommendations/status/{job_id}")
 async def get_job_status(job_id: str):
+    print(job_id)
     job = JobStore.get_job(job_id)
+    print(job)
     if not job:
         return JobStatus(status="failed", error="Job not found")
     return job
+
+@router.post('/movies/check')
+async def is_in_our_db(
+    request: MovieRequest,
+    background_tasks: BackgroundTasks
+    ):
+    job_id = str(uuid.uuid4())
+    JobStore.create_job(job_id)
+
+    logger.info(f'Starting job {job_id}')
+
+    background_tasks.add_task(
+        check_if_in,
+        job_id,
+        request.movies
+    )
+
+    return {"jobId": job_id}
+
+@router.get('/movies/find/{query}')
+async def findMovie(
+    query: str,
+    ):
+    job_id = str(uuid.uuid4())
+    JobStore.create_job(job_id)
+
+    logger.info(f'Starting job {job_id}')
+
+    results = await find_movie(query, 80)
+
+    return results
+

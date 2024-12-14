@@ -9,7 +9,8 @@
   const algorithms = [
     { id: 'collaborative', name: 'Collaborative Filtering' },
     { id: 'content_based', name: 'Content Based' },
-    { id: 'hybrid', name: 'Hybrid' }
+    { id: 'hybrid', name: 'Hybrid' },
+    { id: 'svd', name: 'SVD' }
   ];
 
   async function generateRecommendations() {
@@ -21,35 +22,31 @@
       error = "Failed to generate recommendations";
     } finally {
       isLoading = false;
+      
     }
   }
 </script>
-
 <div class="w-64 bg-white rounded-lg shadow-md p-4">
   <div class="flex justify-between items-center mb-4">
     <h2 class="text-xl font-semibold">Recommendations</h2>
-    <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        Algorithm
-      </label>
-      <select
-        bind:value={selectedAlgorithm}
-        class="w-full p-2 border rounded"
-      >
-        {#each algorithms as algo}
-          <option value={algo.id}>{algo.name}</option>
-        {/each}
-      </select>
-    </div>
-  
-    <button
-      on:click={generateRecommendations}
-      class="w-full bg-blue-500 text-white p-2 rounded disabled:opacity-50"
-      disabled={isLoading}
-    >
-      {isLoading ? 'Generating...' : 'Generate Recommendations'}
-    </button>
   </div>
+
+  <div class="mb-4">
+    <label class="block text-sm font-medium text-gray-700 mb-2">Algorithm</label>
+    <select bind:value={selectedAlgorithm} class="w-full p-2 border rounded">
+      {#each algorithms as algo}
+        <option value={algo.id}>{algo.name}</option>
+      {/each}
+    </select>
+  </div>
+
+  <button
+    on:click={generateRecommendations}
+    class="w-full bg-blue-500 text-white p-2 rounded disabled:opacity-50"
+    disabled={isLoading}
+  >
+    {isLoading ? 'Generating...' : 'Generate Recommendations'}
+  </button>
 
   {#if error}
     <div class="text-red-500 text-sm mb-4">{error}</div>
