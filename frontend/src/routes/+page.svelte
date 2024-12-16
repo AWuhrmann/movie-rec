@@ -16,6 +16,10 @@
 	import TSne from '../components/tSNE.svelte';
 	import InfiniteMovieScroll from '../components/InfiniteMovieScroll.svelte';
 	import type { Movie } from '../types/movie';
+
+
+  import { bounceOut } from 'svelte/easing';
+	import SunBurstMovies from '../components/SunBurstMovies.svelte';
     //import '$lib/styles/github.scss';
 
     const carta = new Carta({
@@ -139,8 +143,8 @@
       <SectionEditor sectionName='content-based-recommendations' />
         
       <TSne></TSne>
-      
     </div>
+
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       <h2>Interactive Neuron Analyzer</h2>
       <NeuronsAnalyzer></NeuronsAnalyzer>
@@ -151,17 +155,17 @@
           
           <div class="bg-white p-6 rounded-lg shadow-sm">
             <h3 class="text-gray-500 mb-2">Total Movies</h3>
-            <p class="text-3xl font-bold"><CountUp endValue={342}/></p>
+            <p class="text-3xl font-bold"><CountUp endValue={342} decimal={0}/></p>
           </div>
           
           <div class="bg-white p-6 rounded-lg shadow-sm">
             <h3 class="text-gray-500 mb-2">Rated Movies</h3>
-            <p class="text-3xl font-bold">{ratedMovies}</p>
+            <p class="text-3xl font-bold"><CountUp endValue={4583821} decimal={0}/></p>
           </div>
           
           <div class="bg-white p-6 rounded-lg shadow-sm">
             <h3 class="text-gray-500 mb-2">Average Rating</h3>
-            <p class="text-3xl font-bold">{averageRating.toFixed(1)}</p>
+            <p class="text-3xl font-bold"><CountUp endValue={3.4} decimal={2} easing={bounceOut}/></p>
           </div>
         </div>
       </section>
@@ -175,21 +179,22 @@
 
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12 mt-12">
 
+      <section id="collaborative">
         <h2 class="collab-filtering">Collaborative filtering</h2>
-        <section id="collaborative">
           
           <SectionEditor sectionName='collaborative-filtering' />
           
         </section>
     </div>
     
+    <SunBurstMovies></SunBurstMovies>
     
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
-    <section id="implementation">
+      <section id="implementation">
       
-      <h2>Implementation</h2>
+        <h2>Implementation</h2>
       
-      <SectionEditor sectionName='implementation' />
+        <SectionEditor sectionName='implementation' />
       </section>
     </div>
 
@@ -200,8 +205,35 @@
         
         <SectionEditor sectionName='conclusion' />
         </section>
-      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+      <section id="extra-1">
+        
+        <h2>Extra 1</h2>
+        <SectionEditor sectionName='extra-1' />
+      </section>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+      <section id="extra-2">
+        
+        <h2>Extra 2</h2>
+        <SectionEditor sectionName='extra-2' />
+      </section>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+      <section id="extra-3">
+        
+        <h2>Extra 3</h2>
+        <SectionEditor sectionName='extra-3' />
+      </section>
+    </div>
+
   </div>
+
+
 </div>
 
   <style>

@@ -11,6 +11,7 @@
   let isLoading = true;
   let isLoadingMovies = true;
   let error: string | null = null;
+  let container;
 
   let movies: Movie[] = [];
 
@@ -135,6 +136,16 @@
     }
   }
 
+  // Set up our constants
+  $: widthMap = 300;
+  $: heightMap = 100;
+  $: widthAct = 300;
+  $: heightAct = 100;
+
+  $: if (widthAct | heightAct | widthMap | heightMap) {
+    createVisualization();
+  }
+
   // Function to create our visualization once data is loaded
   function createVisualization() {
     if (!worldGeoJson || !svgContainer || !svgActivation) return;
@@ -185,15 +196,15 @@
         tooltip.html(Math.round((1000.0 * populationData.get(d.id))) / 1000)
           .style("left", (event.pageX) + "px")
           .style("top", (event.pageY - 28) + "px");
-
-      })
+          
+        })
       .on("mouseout", function(event, d) {
         d3.select(this)
           .style("stroke", "#fff")
           .style("stroke-width", 0.5);
       
         tooltip.transition()
-          .duration(500)
+        .duration(500)
           .style("opacity", 0);
         });
 
@@ -255,15 +266,11 @@
  
   }
 
-  // Set up our constants
-  const widthMap = 600;
-  const heightMap = 100;
-  const widthAct = 600;
-  const heightAct = 100;
 
   // Use Svelte's onMount to start loading data when component mounts
   onMount(() => {
     fetchData();
+
   });
 
   // Watch for container size changes
@@ -301,7 +308,7 @@
   }
 </script>
 
-<div class="grid-container">
+<div class="grid-container" bind:this={container}>
   <!-- Left Column -->
   <div class="left-column">
     <!-- Search Section -->
@@ -350,7 +357,14 @@
       {:else if error}
         <div class="error-state">{error}</div>
       {:else}
-        <svg bind:this={svgContainer}></svg>
+      <div class="w-full h-full" bind:clientWidth={widthMap} bind:clientHeight={heightMap}>
+        <svg 
+        bind:this={svgContainer}
+        {widthMap}
+        {heightMap}
+        viewBox="0 0 {widthMap} {heightMap}"></svg>
+        
+      </div>
       {/if}
     </div>
 
@@ -362,7 +376,16 @@
       {:else if error}
         <div class="error-state">{error}</div>
       {:else}
-        <svg bind:this={svgActivation}></svg>
+      <div class="w-full h-full" bind:clientWidth={widthAct} bind:clientHeight={heightAct}>
+        <svg 
+        bind:this={svgActivation}
+        {widthAct}
+        {heightAct}
+        viewBox="0 0 {widthAct} {heightAct}"
+        preserveAspectRatio="xMidYMid meet"
+        class="w-full h-auto"
+        ></svg>
+      </div>
       {/if}
     </div>
   </div>

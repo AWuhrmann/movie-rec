@@ -31,7 +31,7 @@
     // 3. Search term is less than 2 characters
     if (!trimmedSearch) {
       const combinedResults = [
-        ...ratedMovies,
+        // ...ratedMovies,
         ...allMovies.filter(movie => !ratedMovies.some(rated => rated.id === movie.id))
       ];
       movies.set(combinedResults);

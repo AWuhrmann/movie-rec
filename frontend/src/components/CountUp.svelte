@@ -1,18 +1,36 @@
 <script lang="ts">
-    import { tweened } from 'svelte/motion';
-    import { cubicOut } from 'svelte/easing';
+    import { Tween, tweened } from 'svelte/motion';
+    import { cubicOut, circOut, quintOut } from 'svelte/easing';
+    import { onMount } from 'svelte';
+
+    let { endValue, decimal, easing = quintOut } = $props();
     
-    export let endValue: number;
-    export let duration = 2000; // Duration in milliseconds
+    const tween = new Tween(0,
+    {
+      delay: 100, 
+      duration: 4000, 
+      easing: easing});
+
+    let triggerElement : HTMLSpanElement;
+  
+    onMount(() => {
+
+      console.log('test')
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            tween.target = endValue;
+            // Your action here
+          }
+        });
+      });
     
-    const count = tweened(0, {
-      duration,
-      easing: cubicOut
-    });
+    if (triggerElement) {
+      observer.observe(triggerElement);
+    }
     
-    // Start the animation when the component mounts
-    $: count.set(endValue);
+    return () => observer.disconnect();
+  });
   </script>
   
-  <span>{Math.round($count)}</span>
-  
+<span bind:this={triggerElement}>{tween.current.toFixed(decimal)}</span>    

@@ -43,7 +43,7 @@
     <!-- Using larger max-width and adjusted breakpoints -->
     <div class="pl-64 w-[1400px] min-w-0 [@media(min-width:1500px)]:pl-0 [@media(min-width:1500px)]:w-[1000px] mx-auto">
       <main class="min-h-screen p-8">
-        {@render children()}
+       <slot></slot>
       </main>
     </div>
   </div>

@@ -6,10 +6,14 @@ import pandas as pd
 import numpy as np
 import scipy
 from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics.pairwise import cosine_similarity
 from app.models.SparseSVDRecommender import SparseSVDRecommender
 from fastapi import FastAPI
 import os
 from thefuzz import fuzz, process
+from app.models.kNN import *
+from sklearn.neighbors import NearestNeighbors
+
 
 ratings_sparse = None
 data_folder = './app/'
@@ -20,9 +24,13 @@ df = None
 movie_mapping = None
 reverse_movie_mapping = None
 user_mapping = None
-sparse_matrix_rep = None
+sparse_matrix = None
 movie_names = None
 recommender = None
+df_ratings = None
+knn = NearestNeighbors(metric='cosine', algorithm='brute', n_jobs=-1, n_neighbors=20)
+
+encodings, movie_mapping_SAE, reverse_movie_mapping_SAE = None, None, None
 
 app = FastAPI()
 
@@ -48,102 +56,117 @@ def inverse_imdb_transform(imdb):
     return int(imdb[2:])
 
 
+
 def init_data(app):
     @app.on_event("startup")
     async def load_datasets():
-        global user_mapping, movie_mapping, df, sparse_matrix_rep, movie_names, recommender, reverse_movie_mapping
+        global user_mapping, movie_mapping, df_ratings, sparse_matrix, movie_names, recommender, reverse_movie_mapping, knn
         # Load datasets once when the server starts
         
-        print(os.getcwd())
-    
-        data_folder = './Data/'
-
+        logger.info(os.getcwd())
         movie_names = pd.read_csv('./Data/movie_names.csv', index_col=0)
 
         # load the data
-        df= pd.read_csv('./Data/df_optimized.csv', index_col=0)
+        
+        logger.info('Loading ratings')
+        df_ratings = pd.read_csv('./Data/df_ratings_knn.csv', index_col=0)
+        logger.info('Loading sparse matrix')
+        sparse_matrix = scipy.sparse.load_npz("./Data/sparse_ratings_matrix.npz")
+        
+        logger.info('Fitting kNN to sparse')
+        knn.fit(sparse_matrix)
+        
+        movie_mapping = np.load('./Data/movie_mapping.npy', allow_pickle=True).item()
+        reverse_movie_mapping = np.load('./Data/reverse_movie_mapping.npy', allow_pickle=True).item()
 
-        # Generate unique new IDs for movies globally
-        movie_mapping = {old_id: new_id for new_id, old_id in enumerate(df['imdbId'].unique(), start=0)}
-        reverse_movie_mapping = {new_id: old_id for new_id, old_id in enumerate(df['imdbId'].unique(), start=0)}
-
-        # Add the new_movieId column using the global mapping
-        df['new_movieId'] = df['imdbId'].map(movie_mapping)
-
-        # Generate unique new IDs for user globally
-        user_mapping = {old_id: new_id for new_id, old_id in enumerate(df['userId'].unique(), start=0)}
-
-        # Add the new_userId column using the global mapping
-        df['new_userId'] = df['userId'].map(user_mapping)
     
-        sparse_matrix_rep= scipy.sparse.load_npz("./Data/Sparse_hyperspace_user_movie.npz")
 
         # ------------------------------ SVD ------------------------------------ # 
 
+        logger.info('Loading SparseSVD')
         recommender = SparseSVDRecommender()
     
+        logger.info('Loading model for SVD')
         recommender.load_model('Data/sample_svd_model14.joblib')
+
+        # -------------------------------- CONTENT BASED ------------------------  #
+        global encodings, movie_mapping_SAE, reverse_movie_mapping_SAE
+
+        logger.info('Loading Content based values')
+
+        encodings = np.load('./Data/SAE_embedding.npy', allow_pickle=True)
+        movie_mapping_SAE = np.load('./Data/mapping_SAE.npy', allow_pickle=True).item()
+        reverse_movie_mapping_SAE = np.load('./Data/reverse_mapping_SAE.npy', allow_pickle=True).item()
 
 # ------------------------------------------ ALGO ------------------------------------------------
 
-def recommand_movies_for_website_user(ratings: List[Rating], n_neighbors=2, n_movies= 2) :
-    global merged_df, df_more_reduced, sparse_matrix_rep
+def recommend_SAE(ratings: List[Rating]):
+    
+    imdbid = [inverse_imdb_transform(rating.imdb_id) for rating in ratings]
 
-    list_= [[inverse_imdb_transform(rating.imdb_id), rating.rating] for rating in ratings]
+    similarities = np.zeros(encodings.shape[0])
+    for movie in imdbid:
 
-    print(list_)
+        id = movie_mapping_SAE[movie]
 
-    total_nbr_of_movies= sparse_matrix_rep.shape[1]
-    sparse_vec, movies_watched= generate_sparse_vector_from_ratings(list_, total_nbr_of_movies)
-    # Generate a fit to approximate nearest neighbors of a given user in the database
-    knn_function= NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=n_neighbors, n_jobs=-1)
-    knn_function.fit(sparse_matrix_rep)
-    distances, indices= knn_function.kneighbors(sparse_vec, n_neighbors= n_neighbors)
-    indices= indices[0, :]
-    moviesid_to_check= df[df['new_userId'].isin(indices)]
-    df_temp= moviesid_to_check.groupby('imdbId')
-    averages= df_temp['rating'].mean()
-    C= averages.mean()
-    number_of_votes= df_temp['new_userId'].count()
-    m= number_of_votes.quantile(0.8)
-    scores= weighted_rating(averages, number_of_votes, m , C)
-    sorted_scores_id= pd.DataFrame(data= scores.sort_values(ascending= False).index, columns= ['imdbId'])
-    final_recommandation= []
-    n_temp= n_movies
-    while len(final_recommandation) < n_movies :
-        movies_recommanded= sorted_scores_id['imdbId'].values[:n_temp]
-        final_recommandation= list(set(movies_recommanded) - set(movies_recommanded).intersection(set(movies_watched.values)))
-        n_temp+=1
-    final_rec_df= pd.DataFrame(data= final_recommandation[:n_movies], columns= ['imdbId'])
+        embedding = encodings[id].reshape(1,-1)
 
-    print(final_rec_df['imdbId'].apply(formating_imdbId).values)
+        similarities += cosine_similarity(encodings, embedding).ravel()
 
-    return final_rec_df['imdbId'].apply(formating_imdbId).values
+        similarities[id] = float('-inf')
+
+    similar_indices = np.argsort(similarities)[::-1]
+    print(similar_indices[:5])
+    recommendations = [formating_imdbId(reverse_movie_mapping_SAE[rec_id]) for rec_id in similar_indices[:5]]
+    
+    results = [MovieRecommendation(id=id, title=movie_names[movie_names['imdb_id'] == id]['title'].values[0]) for id in recommendations]
+
+    print(f'SVD Result : {results}')
+
+    return results
+
+
+
+def recommend_kNN(ratings: List[Rating]):
+    
+    list_= [[str(inverse_imdb_transform(rating.imdb_id)), rating.rating] for rating in ratings]
+    
+    recommendations = optimize_recommendations_for_single_user(
+        list_,  # List of (movie_id, rating) tuples
+        df_ratings,   # Original ratings DataFrame
+        movie_mapping,    # Mapping of external movie IDs to sparse matrix indices
+        knn,          # Fitted K-Nearest Neighbors model
+        sparse_matrix,  # Sparse ratings matrix
+        num_recommendations=5,
+        n_neighbors_to_take=20,
+        live=True)
+
+    recommendations = recommendations['mean_centering']
+    imdb_id = [formating_imdbId(int(reverse_movie_mapping[rec[0]])) for rec in recommendations]
+
+    results = [MovieRecommendation(id=id, title=movie_names[movie_names['imdb_id'] == id]['title'].values[0]) for id in imdb_id]
+
+    return results
 
 def SVD_recommendation(ratings: List[Rating]):
     
-    try:
+    ratings = [[str(inverse_imdb_transform(rating.imdb_id)), rating.rating] for rating in ratings]
 
-        ratings = [[inverse_imdb_transform(rating.imdb_id), rating.rating] for rating in ratings]
+    new_ratings_df = pd.DataFrame(ratings, columns=['original_movie_id', 'rating'])
+    new_ratings_df['original_movie_id'] = new_ratings_df['original_movie_id']
 
-        new_ratings_df = pd.DataFrame(ratings, columns=['original_movie_id', 'rating'])
-        new_ratings_df['original_movie_id'] = new_ratings_df['original_movie_id']
+    new_ratings_df['sparse_movie_id'] = new_ratings_df['original_movie_id'].map(movie_mapping)
+    ratings_to_pass_df = new_ratings_df.drop(columns=['original_movie_id'])
 
-        new_ratings_df['sparse_movie_id'] = new_ratings_df['original_movie_id'].map(movie_mapping)
-        ratings_to_pass_df = new_ratings_df.drop(columns=['original_movie_id'])
+    recommendations = recommender.handle_new_user(ratings_to_pass_df, n_items=5)
 
-        recommendations = recommender.handle_new_user(ratings_to_pass_df, n_items=5)
+    ids = [formating_imdbId(int(reverse_movie_mapping[rec[0]])) for rec in recommendations[:5]]
 
-        ids = [formating_imdbId(reverse_movie_mapping[id]) for id, _ in recommendations[:5]]
+    results = [MovieRecommendation(id=id, title=movie_names[movie_names['imdb_id'] == id]['title'].values[0]) for id in ids]
 
-        results = [MovieRecommendation(id=id, title=movie_names[movie_names['imdb_id'] == id]['title'].values[0]) for id in ids]
+    print(f'SVD Result : {results}')
 
-        print(f'SVD Result : {results}')
-
-        return results
-
-    except Exception as e:
-        print(e)
+    return results
 
 
 def content_based_filtering(ratings: List[Rating]) -> List[MovieRecommendation]:
@@ -200,9 +223,9 @@ async def generate_recommendations(job_id: str, ratings: List[Rating], algorithm
     try:
         recommendations = []
         if algorithm == AlgorithmType.COLLABORATIVE:
-            recommendations = recommand_movies_for_website_user(ratings)
+            recommendations = recommend_kNN(ratings)
         elif algorithm == AlgorithmType.CONTENT_BASED:
-            recommendations = content_based_filtering(ratings)
+            recommendations = recommend_SAE(ratings)
         elif algorithm == AlgorithmType.HYBRID:
             recommendations = hybrid_recommendations(ratings)
         elif algorithm == AlgorithmType.SVD:
