@@ -2,16 +2,9 @@
     import { movies } from '$lib/movieStore';
     import 'katex/dist/katex.css';
 
-    import { Carta, Markdown } from 'carta-md';
-    import { math } from '@cartamd/plugin-math';
-    import { emoji } from '@cartamd/plugin-emoji';
-    import { slash } from '@cartamd/plugin-slash';
-    import { code } from '@cartamd/plugin-code';
-	import CountUp from '../components/CountUp.svelte';
-	import GraphComponent from '../components/GraphComponent.svelte';
+  import CountUp from '../components/CountUp.svelte';
 
 	import SectionEditor from '../components/SectionEditor.svelte';
-	import Diagram from '../components/Diagram.svelte';
 	import NeuronsAnalyzer from '../components/NeuronsAnalyzer.svelte';
 	import TSne from '../components/tSNE.svelte';
 	import InfiniteMovieScroll from '../components/InfiniteMovieScroll.svelte';
@@ -20,17 +13,6 @@
 
   import { bounceOut } from 'svelte/easing';
 	import SunBurstMovies from '../components/SunBurstMovies.svelte';
-    //import '$lib/styles/github.scss';
-
-    const carta = new Carta({
-      sanitizer: false,
-      extensions: [
-        emoji(),
-        slash(),
-        code(),
-        math()
-      ]
-    });
 
   	export let value = `
     # this is a test

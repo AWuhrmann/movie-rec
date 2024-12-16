@@ -1,6 +1,7 @@
-<script>
+<script lang="ts">
     import { onMount } from 'svelte';
-  
+	import type { Arc } from '../lib/netExampleStore';
+
     // Sample data structure with image parameters
     const data = {
   name: "Root",
@@ -140,7 +141,7 @@
   ]
 };
 
-let selectedArc = null;
+import { selectedArcs } from '$lib/netExampleStore';
 let movieConnections = null;
 
 onMount(() => {
@@ -154,10 +155,25 @@ async function loadJson() {
     console.log(movieConnections);
 }
 
-function isConnected(arc) {
-    if (!selectedArc) return false;
-    if (!movieConnections[selectedArc.name]) return false;
-    return movieConnections[selectedArc.name].recommended_movies.includes(arc.name);
+function isConnected(arc: Arc) {
+    // If this arc is selected, it shouldn't be green
+    if ($selectedArcs.includes(arc)) return false;
+    
+    // If nothing is selected, nothing should be green
+    if ($selectedArcs.length === 0) return false;
+    
+    // Create combined key for multiple selections
+    const selectedNames = $selectedArcs
+        .map(selectedArc => selectedArc.name)
+        .sort()  // Sort alphabetically
+        .join(" + ");
+    
+    // Check if this combination exists in movieConnections
+    if (movieConnections[selectedNames]) {
+        return movieConnections[selectedNames].recommended_movies.includes(arc.name);
+    }
+
+    return false
 }
   
     let width = 1000;
@@ -295,15 +311,27 @@ function isConnected(arc) {
     };
   }
 
-  let arcs = computeArcs(data);
-  let hoveredArc = null;
+  let arcs: Arc[] = computeArcs(data);
+  let hoveredArc: Arc | null = null;
 
-  function getClipPathId(arc) {
+
+  function toggleSelection(arc: Arc) {
+    selectedArcs.update(current => {
+        const isSelected = current.includes(arc);
+        if (isSelected) {
+            return current.filter(a => a !== arc);
+        } else {
+            return [...current, arc];
+        }
+    });
+}
+
+  function getClipPathId(arc: Arc) {
     return `clip-${arc.name.toLowerCase().replace(/\s+/g, '-')}`;
   }
 
   // Calculate the maximum size that will fit in the arc
-  function calculateMaxImageSize(arc) {
+  function calculateMaxImageSize(arc: Arc) {
     return 9999
     const radialSpace = arc.outerRadius - arc.innerRadius - (2 * arc.image.padding);
     const arcLength = arc.angleWidth * ((arc.innerRadius + arc.outerRadius) / 2);
@@ -321,38 +349,50 @@ function isConnected(arc) {
       {/each}
     </defs>
 
-    {#each arcs as arc}
-    <g
-      class:root={arc.level === 0}
-      on:mouseenter={() => hoveredArc = arc}
-      on:mouseleave={() => hoveredArc = null}
-      on:click={() => selectedArc = (selectedArc === arc) ? null : arc}
-      class:selected={selectedArc === arc}
-      class:connected={isConnected(arc)}
-    >
-      <path
-        d={arc.path}
-        fill="white"
-        stroke="#ccc"
-        stroke-width="1"
-        class="arc"
+    
+{#each arcs as arc}
+<g
+  role="button"
+  tabindex="0"
+  class:root={arc.level === 0}
+  on:mouseenter={() => hoveredArc = arc}
+  on:mouseleave={() => hoveredArc = null}
+  on:click={() => toggleSelection(arc)}
+  on:keydown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleSelection(arc);
+    }
+  }}
+  class:selected={$selectedArcs.includes(arc)}
+  class:connected={isConnected(arc)}
+  aria-pressed={$selectedArcs.includes(arc)}
+  aria-label={`Arc segment ${arc.level}`}
+>
+  <path
+    d={arc.path}
+    fill="white"
+    stroke="#ccc"
+    stroke-width="1"
+    class="arc"
+  /> <!-- pointer-events="none" -->
+  {#if arc.image}
+    <g clip-path={`url(#${getClipPathId(arc)})`}>
+      <image
+        href={arc.image.url}
+        x={arc.centerX - Math.min(arc.image.size, calculateMaxImageSize(arc)) / 2}
+        y={arc.centerY - Math.min(arc.image.size, calculateMaxImageSize(arc)) / 2}
+        width={Math.min(arc.image.size, calculateMaxImageSize(arc))}
+        height={Math.min(arc.image.size, calculateMaxImageSize(arc))}
+        class="segment-image"
+        preserveAspectRatio="xMidYMid meet"
+        
+        alt=""
       />
-      {#if arc.image}
-        <g clip-path={`url(#${getClipPathId(arc)})`}>
-          <image
-            href={arc.image.url}
-            x={arc.centerX - Math.min(arc.image.size, calculateMaxImageSize(arc)) / 2}
-            y={arc.centerY - Math.min(arc.image.size, calculateMaxImageSize(arc)) / 2}
-            width={Math.min(arc.image.size, calculateMaxImageSize(arc))}
-            height={Math.min(arc.image.size, calculateMaxImageSize(arc))}
-            class="segment-image"
-            preserveAspectRatio="xMidYMid meet"
-            pointer-events="none"
-          />
-        </g>
-      {/if}
-    </g>
-  {/each}
+    </g> <!-- pointer-events="none" -->
+  {/if}
+</g>
+{/each}
     
     {#if hoveredArc}
       <text
@@ -368,34 +408,25 @@ function isConnected(arc) {
 </div>
 
 <style>
-  .sunburst-container {
+.sunburst-container {
     display: flex;
     justify-content: center;
     align-items: center;
-  }
+}
 
-  .arc {
+.arc {
     transition: fill 0.2s;
 }
 
-.arc:hover {
-    fill: #e0e0e0;  /* Make this darker for better contrast */
-    opacity: 0.8;   /* Add this for better visibility */
+g:hover .arc {
+    fill: #e0e0e0;
+    opacity: 0.8;
 }
 
-  .segment-image {
-    transition: transform 0.2s;
-  }
-
-  .segment-image:hover {
-    transform: scale(1);
-  }
-
-  .segment-image {
+.segment-image {
     filter: grayscale(100%);
     transition: filter 0.3s;
 }
-
 
 .root .segment-image {
     filter: grayscale(0%) !important;
@@ -406,15 +437,17 @@ g:hover .segment-image {
 }
 
 .selected .segment-image {
-    filter: grayscale(0%);
+    filter: grayscale(0%) !important;
 }
 
-.connected .segment-image {
-    filter: grayscale(0%);
-}
-
-.connected .segment-image {
+/* Connected state for non-selected items */
+.connected:not(.selected) .segment-image {
     filter: grayscale(0%) sepia(100%) saturate(300%) brightness(70%) hue-rotate(90deg);
-    transition: filter 0.3s;
+}
+
+.hover-text {
+    font-size: 16px;
+    fill: #333;
+    font-weight: bold;
 }
 </style>
