@@ -4,6 +4,8 @@
   import { searchMovies } from '../lib/api/imdb';
   import type { Movie } from '../types/movie';
 	import { onDestroy } from 'svelte';
+  import { Search, Settings, Trash } from 'lucide-svelte';
+	import { isLoading } from '$lib/recommendationStore';
   
   let searchTerm = '';
   let previousSearchTerm = ''; // Track previous search to avoid duplicate calls
@@ -23,7 +25,7 @@
   async function handleSearch() {
     const trimmedSearch = searchTerm.trim();
 
-    console.log(ratedMovies);
+    console.log(movies);
     
     // Don't search if:
     // 1. Empty search term (reset to all movies instead)
@@ -74,14 +76,14 @@
   }
 
   // Use $: to watch searchTerm changes
-  $: if (searchTerm !== previousSearchTerm) {
-    if (searchTerm) {
-      debounceSearch();
-    } else {
-      clearTimeout(searchTimeout);
-      handleSearch(); // Will reset to all movies when empty
-    }
-  }
+  // $: if (searchTerm !== previousSearchTerm) {
+  //   if (searchTerm) {
+  //     debounceSearch();
+  //   } else {
+  //     clearTimeout(searchTimeout);
+  //     handleSearch(); // Will reset to all movies when empty
+  //   }
+  // }
 
   // Cleanup on component destroy
   onDestroy(() => {
@@ -89,22 +91,51 @@
       clearTimeout(searchTimeout);
     }
   });
+
+  export let onParameter: () => void;
+  export let onRecommend: () => void;
 </script>
 
-<div class="search-container mb-6 relative">
-  <input
-    type="text"
-    bind:value={searchTerm}
-    placeholder="Search movies... (type at least 2 characters)"
-    class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  />
-  {#if isSearching}
-    <div class="absolute right-2 top-2">
-      <div class="w-6 h-6 border-t-2 border-blue-500 rounded-full animate-spin"></div>
-    </div>
-  {/if}
-</div>
 
-{#if searchError}
-  <div class="text-red-500 mb-4">{searchError}</div>
-{/if}
+<div class="flex gap-2">
+  <div class="flex-1">
+    <input
+    bind:value={searchTerm}
+      type="text"
+      placeholder="Search movies..."
+      class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    />
+  </div>
+  
+  <button 
+    on:click={handleSearch}
+    disabled={isSearching}
+    class="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+  >
+  {#if isSearching}
+    Searching...
+    {:else}
+    <Search size={20} />
+    Search
+    {/if}  
+  </button>
+  
+  <button 
+  on:click={onRecommend}
+    class="bg-green-500 hover:bg-green-600 disabled:bg-green-600 text-white px-6 py-2 rounded-lg"
+    disabled={$isLoading}
+  >
+    {#if $isLoading}
+    Loading...
+    {:else}
+    Recommended
+    {/if}
+  </button>
+  
+  <button
+    on:click={onParameter}
+    class="p-2 rounded-lg"
+  >
+    <Settings size={24} class="text-gray-400 hover:text-gray-600 transition-colors" />
+  </button>
+</div>

@@ -176,8 +176,8 @@ function isConnected(arc: Arc) {
     return false
 }
   
-    let width = 1000;
-  let height = 1000;
+  let width = 700;
+  let height = 700;
   let radius = Math.min(width, height) / 2;
 
   function computeArcs(node, startAngle = 0, endAngle = 2 * Math.PI-0.0001, level = 0) {
@@ -397,7 +397,7 @@ function isConnected(arc: Arc) {
     {#if hoveredArc}
       <text
         x={width/2}
-        y={height - 20}
+        y={height - 120}
         text-anchor="middle"
         class="hover-text"
       >

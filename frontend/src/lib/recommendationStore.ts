@@ -8,17 +8,61 @@ const LOCAL_URL = import.meta.env.VITE_LOCAL_URL;
 
 interface JobStatus {
   id: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: string;
   results?: Movie[];
   error?: string;
 }
 
+const DEFAULT_PARAMS: AlgorithmParams = {
+  knn_item: {
+    k: 5,
+    minCommonItems: 3
+  },
+  knn_user: {
+    k: 10,
+    moviesToConsider: 50,
+    minCommonUsers: 5
+  },
+  content_based: {
+    minSimilarity: 0.5
+  },
+  svd: {
+    // Empty object as per interface
+  },
+  fixedReturns: 10
+};
 
-async function startRecommendationJob(ratings: Array<{imdb_id: string, rating: number}>, algorithm: string) {
+export interface AlgorithmParams {
+  knn_item: {
+      k: number;
+      minCommonItems: number;
+      
+  };
+  knn_user: {
+      k: number;
+      
+      moviesToConsider: number;
+      minCommonUsers: number;
+  };
+  content_based: {
+    minSimilarity: number;
+  };
+  svd: {
+      
+  };
+  fixedReturns: number;
+};
+
+export let selectedAlgorithm = writable<string>("content_based");
+export let isLoading = writable<boolean>(false);
+export let algorithmParams = writable<AlgorithmParams>(DEFAULT_PARAMS);
+export let jobStatus = writable<string>("");
+
+async function startRecommendationJob(ratings: Array<{imdb_id: string, rating: number}>, algorithm: string, params: AlgorithmParams) {
   const response = await fetch(`${LOCAL_URL}/api/recommendations/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ratings, algorithm })
+    body: JSON.stringify({ ratings, algorithm, params })
   });
   
   if (!response.ok) throw new Error('Failed to start recommendation job');
@@ -65,7 +109,7 @@ function createRecommendationStore() {
   return {
     subscribe,
     set,
-    generateRecommendations: async (algorithm: string) => {
+    generateRecommendations: async (algorithm: string, params: AlgorithmParams) => {
       try {
         // Get rated movies
         const ratedMovies = get(movies).filter(m => m.rating > 0);
@@ -75,7 +119,7 @@ function createRecommendationStore() {
         }));
 
         // Start the job
-        const { jobId } = await startRecommendationJob(ratings, algorithm);
+        const { jobId } = await startRecommendationJob(ratings, algorithm, params);
         
         // Poll for results
         return new Promise((resolve, reject) => {
@@ -83,17 +127,16 @@ function createRecommendationStore() {
             try {
               const status = await checkJobStatus(jobId);
               console.log(status.status)
+              jobStatus.set(status.status);
               if (status.status === 'completed') {
                 clearInterval(pollInterval!);
-                console.log('Results:', status.results);
-
                 // Create an array to store all movies
                 const recommendedMovies: Movie[] = status.results.map(res => ({
                     id: res.id,
                     title: res.title,
                     rating: 0,
                     genre: '',
-                    year: '',
+                    year: res.year,
                     poster: null,
                     plot: '',
                     imdbRating: 0,
@@ -120,7 +163,7 @@ function createRecommendationStore() {
               clearInterval(pollInterval);
               reject(new Error('Recommendation timeout'));
             }
-          }, 30000);
+          }, 120000);
         });
       } catch (error) {
         console.error('Failed to generate recommendations:', error);

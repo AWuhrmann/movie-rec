@@ -62,8 +62,10 @@
 		"codemirror": "^6.0.1",
 		"d3": "^7.9.0",
 		"katex": "^0.16.11",
+		"lucide": "github:sveltejs/kit",
 		"lucide-svelte": "^0.468.0",
 		"plotly.js-dist": "^2.35.2",
-		"svelte-routing": "^2.13.0"
+		"svelte-routing": "^2.13.0",
+		"topojson-client": "^3.1.0"
 	}
 }

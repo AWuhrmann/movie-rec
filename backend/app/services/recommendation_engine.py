@@ -14,6 +14,7 @@ from thefuzz import fuzz, process
 from app.models.kNN import *
 from sklearn.neighbors import NearestNeighbors
 
+from app.models.collaborative import *
 
 ratings_sparse = None
 data_folder = './app/'
@@ -28,7 +29,9 @@ sparse_matrix = None
 movie_names = None
 recommender = None
 df_ratings = None
-knn = NearestNeighbors(metric='cosine', algorithm='brute', n_jobs=-1, n_neighbors=20)
+knn_user = NearestNeighbors(metric='cosine', algorithm='brute', n_jobs=-1, n_neighbors=20)
+knn_item = NearestNeighbors(metric='cosine', algorithm='brute', n_jobs=-1, n_neighbors=20)
+
 
 encodings, movie_mapping_SAE, reverse_movie_mapping_SAE = None, None, None
 
@@ -60,11 +63,11 @@ def inverse_imdb_transform(imdb):
 def init_data(app):
     @app.on_event("startup")
     async def load_datasets():
-        global user_mapping, movie_mapping, df_ratings, sparse_matrix, movie_names, recommender, reverse_movie_mapping, knn
+        global user_mapping, movie_mapping, df_ratings, sparse_matrix, movie_names, recommender, reverse_movie_mapping, knn_user
         # Load datasets once when the server starts
         
         logger.info(os.getcwd())
-        movie_names = pd.read_csv('./Data/movie_names.csv', index_col=0)
+        movie_names = pd.read_csv('./Data/movie_names_dates_imdb.csv', index_col=0)
 
         # load the data
         
@@ -73,8 +76,11 @@ def init_data(app):
         logger.info('Loading sparse matrix')
         sparse_matrix = scipy.sparse.load_npz("./Data/sparse_ratings_matrix.npz")
         
-        logger.info('Fitting kNN to sparse')
-        knn.fit(sparse_matrix)
+        logger.info('Fitting kNN to sparse user')
+        knn_user.fit(sparse_matrix) 
+        
+        logger.info('Fitting kNN to sparse item')
+        knn_item.fit(sparse_matrix.T) 
         
         movie_mapping = np.load('./Data/movie_mapping.npy', allow_pickle=True).item()
         reverse_movie_mapping = np.load('./Data/reverse_movie_mapping.npy', allow_pickle=True).item()
@@ -100,7 +106,17 @@ def init_data(app):
 
 # ------------------------------------------ ALGO ------------------------------------------------
 
-def recommend_SAE(ratings: List[Rating]):
+def get_rec_from_ids(imdb_ids: List[str]):
+
+    return [MovieRecommendation(id=id, 
+                                title=movie_names[movie_names['imdb_id'] == id]['title'].values[0],
+                                year=movie_names[movie_names['imdb_id'] == id]['year'].values[0] 
+                                    if movie_names[movie_names['imdb_id'] == id]['year'].values[0] > 0 
+                                    else None
+                                    ) for id in imdb_ids]
+
+
+def recommend_SAE(ratings: List[Rating], fixed_count, min_similarity=0):
     
     imdbid = [inverse_imdb_transform(rating.imdb_id) for rating in ratings]
 
@@ -115,40 +131,116 @@ def recommend_SAE(ratings: List[Rating]):
 
         similarities[id] = float('-inf')
 
-    similar_indices = np.argsort(similarities)[::-1]
-    print(similar_indices[:5])
-    recommendations = [formating_imdbId(reverse_movie_mapping_SAE[rec_id]) for rec_id in similar_indices[:5]]
-    
-    results = [MovieRecommendation(id=id, title=movie_names[movie_names['imdb_id'] == id]['title'].values[0]) for id in recommendations]
 
-    print(f'SVD Result : {results}')
+    if min_similarity > 0:
+        similarities[similarities < min_similarity] = float('-inf')
+            
+    # Get top N recommendations
+    similar_indices = np.argsort(similarities)[::-1][:fixed_count]
+    
+    # Convert back to IMDb IDs
+    recommendations = [
+        formating_imdbId(reverse_movie_mapping_SAE[rec_idx])
+        for rec_idx in similar_indices
+        if similarities[rec_idx] != float('-inf')
+    ]
+    print(recommendations)
+    results = get_rec_from_ids(recommendations)    
+    print(results)
 
     return results
 
 
+async def recommend_kNN_item_based(ratings: List[Rating], fixed_count, k, minCommonItems, jobid=None):
 
-def recommend_kNN(ratings: List[Rating]):
+    try:
+        # Update status to running
+        await JobStore.update_job(jobid, JobStatus(status="running"))
+        
+        # Run CPU-intensive operations in a thread
+        loop = asyncio.get_event_loop()
+        
+        # Wrap your CPU-intensive operations in a function
+        def compute_recommendations():
+            print('testtt1')
+            means_by_movie = df_ratings.groupby('sparse_movie_id')['rating'].mean()
+            print('testtt2')
+            std_by_movie = df_ratings.groupby('sparse_movie_id')['rating'].std()
+            ratings_new_user = [[str(inverse_imdb_transform(rating.imdb_id)), rating.rating] for rating in ratings]
+            print('testtt3')
+            knn_item = NearestNeighbors(metric='cosine', algorithm='brute', n_jobs=-1, n_neighbors=k)
+            knn_item.fit(sparse_matrix.T)
+            return means_by_movie, std_by_movie, ratings_new_user, knn_item
+
+        # Run CPU-intensive part in thread
+        means_by_movie, std_by_movie, ratings_new_user, knn_item = await loop.run_in_executor(
+            None,
+            compute_recommendations
+        )
+
+        # Now run your async function
+        recommendations, _ = await reco_item_based_new_user(
+            ratings_new_user,
+            movie_mapping,
+            knn_item,
+            means_by_movie,
+            std_by_movie,
+            sparse_matrix,
+            number_of_reco=5,
+            number_of_movies_for_reco=minCommonItems,
+            jobid=jobid
+        )
+
+        print('testtt4')
+        
+        # Process results in thread if needed
+        def process_results():
+            imdb_ids = [formating_imdbId(int(reverse_movie_mapping[rec[0]])) for rec in recommendations[:fixed_count]]
+            print(imdb_ids)
+            return get_rec_from_ids(imdb_ids)
+
+        results = await loop.run_in_executor(None, process_results)
+        
+        # Update job status with results
+        await JobStore.update_job(jobid, JobStatus(status="completed", result=results))
+        
+        return results
+    except Exception as e:
+        logger.exception("Error in generate_recommendations")
+        await JobStore.update_job(jobid, JobStatus(status="failed", error=str(e)))
+        raise
+
+
+
+def recommend_kNN_user_based(ratings: List[Rating], fixed_count, k, minCommonUsers, maxMovies):
     
-    list_= [[str(inverse_imdb_transform(rating.imdb_id)), rating.rating] for rating in ratings]
+    ratings_new_user = [[str(inverse_imdb_transform(rating.imdb_id)), rating.rating] for rating in ratings]
     
-    recommendations = optimize_recommendations_for_single_user(
-        list_,  # List of (movie_id, rating) tuples
-        df_ratings,   # Original ratings DataFrame
-        movie_mapping,    # Mapping of external movie IDs to sparse matrix indices
-        knn,          # Fitted K-Nearest Neighbors model
-        sparse_matrix,  # Sparse ratings matrix
-        num_recommendations=5,
-        n_neighbors_to_take=20,
-        live=True)
+    means_by_user = df_ratings.groupby('sparse_user_id')['rating'].mean()
+    std_by_user = df_ratings.groupby('sparse_user_id')['rating'].std()
 
-    recommendations = recommendations['mean_centering']
-    imdb_id = [formating_imdbId(int(reverse_movie_mapping[rec[0]])) for rec in recommendations]
+    recommendations = reco_user_based_new_user(
+        ratings_new_user,
+        movie_mapping,
+        df_ratings,
+        knn_user,
+        means_by_user,
+        std_by_user,
+        sparse_matrix.shape[1],
+        num_reco=10,
+        number_of_neighbors=k,
+        max_number_of_movies=maxMovies,
+        number_of_users=minCommonUsers)
 
-    results = [MovieRecommendation(id=id, title=movie_names[movie_names['imdb_id'] == id]['title'].values[0]) for id in imdb_id]
+
+    recommendations = recommendations['mean_centering'][:fixed_count]
+    imdb_ids = [formating_imdbId(int(reverse_movie_mapping[rec[0]])) for rec in recommendations]
+
+    results = get_rec_from_ids(imdb_ids)
 
     return results
 
-def SVD_recommendation(ratings: List[Rating]):
+def SVD_recommendation(ratings: List[Rating], fixed_count):
     
     ratings = [[str(inverse_imdb_transform(rating.imdb_id)), rating.rating] for rating in ratings]
 
@@ -158,13 +250,11 @@ def SVD_recommendation(ratings: List[Rating]):
     new_ratings_df['sparse_movie_id'] = new_ratings_df['original_movie_id'].map(movie_mapping)
     ratings_to_pass_df = new_ratings_df.drop(columns=['original_movie_id'])
 
-    recommendations = recommender.handle_new_user(ratings_to_pass_df, n_items=5)
+    recommendations = recommender.handle_new_user(ratings_to_pass_df, n_items=fixed_count)
 
-    ids = [formating_imdbId(int(reverse_movie_mapping[rec[0]])) for rec in recommendations[:5]]
+    imdb_ids = [formating_imdbId(int(reverse_movie_mapping[rec[0]])) for rec in recommendations[:fixed_count]]
 
-    results = [MovieRecommendation(id=id, title=movie_names[movie_names['imdb_id'] == id]['title'].values[0]) for id in ids]
-
-    print(f'SVD Result : {results}')
+    results = get_rec_from_ids(imdb_ids)
 
     return results
 
@@ -187,7 +277,7 @@ async def check_if_in(job_id: str, movies: List[str]):
             if movie in movie_mapping:
                 isIn.append(movie)
     except Exception as e:
-        JobStore.update_job(job_id, 
+        await JobStore.update_job(job_id, 
                             JobStatus('failed', error=str(e)))
 
 async def find_movie(query: str, threshold):
@@ -212,33 +302,63 @@ async def find_movie(query: str, threshold):
         
         print(results)
         
-        return [{"title": row.title, "imdb_id": row.imdb_id} for row in results.itertuples()]
+        return [{"title": row.title, "imdb_id": row.imdb_id, "year": row.year} for row in results.itertuples()]
 
     except Exception as e:
         print(e)
         return []
 
 
-async def generate_recommendations(job_id: str, ratings: List[Rating], algorithm: AlgorithmType):
+async def generate_recommendations(job_id: str, ratings: List[Rating], algorithm: AlgorithmType, params):
     try:
+        print(params)
+        fixed_count = 5
+        if 'fixedReturns' in params:
+            fixed_count = params['fixedReturns']
+
         recommendations = []
-        if algorithm == AlgorithmType.COLLABORATIVE:
-            recommendations = recommend_kNN(ratings)
+        if algorithm == AlgorithmType.KNN_USER:
+            k = 100
+            minCommonUsers = 30
+            moviesToConsider = 100
+            if 'k' in params:
+                k = params['k']
+            if 'minCommonUsers' in params:
+                minCommonUsers = params['minCommonUsers']
+            if 'moviesToConsider' in params:
+                moviesToConsider = params['moviesToConsider']
+
+            recommendations = recommend_kNN_user_based(ratings, fixed_count, k, minCommonUsers, moviesToConsider)
+        
+        elif algorithm == AlgorithmType.KNN_ITEM:
+            k = 100
+            minCommonItems = 30
+            if 'k' in params:
+                k = params['k']
+            if 'minCommonItems' in params:
+                minCommonItems = params['minCommonItems']
+
+
+            recommendations = await recommend_kNN_item_based(ratings, fixed_count, k, minCommonItems, jobid=job_id)
+        
         elif algorithm == AlgorithmType.CONTENT_BASED:
-            recommendations = recommend_SAE(ratings)
-        elif algorithm == AlgorithmType.HYBRID:
-            recommendations = hybrid_recommendations(ratings)
+            min_similarity = 100
+            if 'minSimilarity' in params:
+                min_similarity = params['minSimilarity']
+
+            recommendations = recommend_SAE(ratings, fixed_count, min_similarity)
+        
         elif algorithm == AlgorithmType.SVD:
             print('start svd')
-            recommendations = SVD_recommendation(ratings)
+            recommendations = SVD_recommendation(ratings, fixed_count)
 
-        JobStore.update_job(
+        await JobStore.update_job(
             job_id,
             JobStatus(status="completed", results=recommendations)
         )
     except Exception as e:
         print(e)
-        JobStore.update_job(
+        await JobStore.update_job(
             job_id,
             JobStatus(status="failed", error=str(e))
         )

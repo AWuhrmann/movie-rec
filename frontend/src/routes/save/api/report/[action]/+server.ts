@@ -55,7 +55,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
     if (!['content', 'sections'].includes(params.action)) {
         return json({ error: 'Invalid action' }, { status: 400 });
     }
-    console.log("Server called !");
     try {
         if (params.action === 'sections') {
             const sectionsPath = path.join(REPORTS_DIR, SECTIONS_DIR);

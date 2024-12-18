@@ -1,18 +1,22 @@
 from typing import Dict, Optional
 from app.models.recommendation import JobStatus
+import asyncio
 
 class JobStore:
     _jobs: Dict[str, JobStatus] = {}
+    _lock = asyncio.Lock()  # Add lock for thread-safety
 
     @classmethod
-    def create_job(cls, job_id: str):
-        cls._jobs[job_id] = JobStatus(status="pending")
+    async def create_job(cls, job_id: str):
+        async with cls._lock:
+            cls._jobs[job_id] = JobStatus(status="pending")
 
     @classmethod
-    def update_job(cls, job_id: str, status: JobStatus):
-        cls._jobs[job_id] = status
+    async def update_job(cls, job_id: str, status: JobStatus):
+        async with cls._lock:
+            cls._jobs[job_id] = status
 
     @classmethod
-    def get_job(cls, job_id: str) -> Optional[JobStatus]:
-        return cls._jobs.get(job_id)
-
+    async def get_job(cls, job_id: str) -> Optional[JobStatus]:
+        async with cls._lock:
+            return cls._jobs.get(job_id)

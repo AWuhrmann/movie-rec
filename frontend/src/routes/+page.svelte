@@ -13,6 +13,7 @@
 
   import { bounceOut } from 'svelte/easing';
 	import SunBurstMovies from '../components/SunBurstMovies.svelte';
+	import GlobeVisu from '../components/GlobeVisu.svelte';
 
   	export let value = `
     # this is a test
@@ -151,6 +152,12 @@
           </div>
         </div>
       </section>
+      <div class="bg-white p-6 pt-6 rounded-lg shadow-sm mb-12 mt-12">
+        <h2 class="">World map XXXX</h2>
+        <SectionEditor sectionName='world-map' />
+  
+        <GlobeVisu></GlobeVisu>
+      </div>
 
     <InfiniteMovieScroll 
       movies={sampleMovies}
@@ -168,8 +175,13 @@
           
         </section>
     </div>
-    
+    <div class="bg-white p-6 pt-6 rounded-lg shadow-sm mb-12 mt-12">
+      <h2 class="">Interactive small example</h2>
+      <SectionEditor sectionName='sunburst-diagram' />
+
     <SunBurstMovies></SunBurstMovies>
+    </div>
+
     
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       <section id="implementation">
