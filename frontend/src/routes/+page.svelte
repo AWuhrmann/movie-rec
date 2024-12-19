@@ -8,6 +8,7 @@
 	import NeuronsAnalyzer from '../components/NeuronsAnalyzer.svelte';
 	import TSne from '../components/tSNE.svelte';
 	import InfiniteMovieScroll from '../components/InfiniteMovieScroll.svelte';
+	import Videobackground from '../components/Videobackground.svelte';
 	import type { Movie } from '../types/movie';
 
 
@@ -100,13 +101,25 @@
   ];
 
   </script>
+
+<div class="container">
+  <Videobackground 
+  videoSource="/images/matrix.mp4"
+  blurAmount="5px"
+  overlayOpacity="0.3"
+  >
   
-<div class="prose max-w-none">
+</Videobackground>
+
+<div class="report-section">
+  <div class="report-content">
+<div class="container p-8 pl-64 w-[1400px] min-w-0 [@media(min-width:1500px)]:pl-0 [@media(min-width:1500px)]:w-[1000px] mx-auto">
+  <div class="prose max-w-none">
     <h1 class="text-3xl font-bold mb-8">Skibidata - Recommendation algorithms</h1>
     
-      <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       
-        <section id="introduction">
+      <section id="introduction">
         
         <h2>Introduction</h2>
         
@@ -124,10 +137,10 @@
         <h2>Content-based recommendation</h2>
       </section>
       <SectionEditor sectionName='content-based-recommendations' />
-        
+      
       <TSne></TSne>
     </div>
-
+    
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       <h2>Interactive Neuron Analyzer</h2>
       <NeuronsAnalyzer></NeuronsAnalyzer>
@@ -155,52 +168,52 @@
       <div class="bg-white p-6 pt-6 rounded-lg shadow-sm mb-12 mt-12">
         <h2 class="">World map XXXX</h2>
         <SectionEditor sectionName='world-map' />
-  
+        
         <GlobeVisu></GlobeVisu>
       </div>
 
-    <InfiniteMovieScroll 
+      <InfiniteMovieScroll 
       movies={sampleMovies}
       speed={1}
       direction="left"
       gap={20}
-    />
-
-    <div class="bg-white p-6 rounded-lg shadow-sm mb-12 mt-12">
-
-      <section id="collaborative">
-        <h2 class="collab-filtering">Collaborative filtering</h2>
+      />
+      
+      <div class="bg-white p-6 rounded-lg shadow-sm mb-12 mt-12">
+        
+        <section id="collaborative">
+          <h2 class="collab-filtering">Collaborative filtering</h2>
           
           <SectionEditor sectionName='collaborative-filtering' />
           
         </section>
-    </div>
+      </div>
     <div class="bg-white p-6 pt-6 rounded-lg shadow-sm mb-12 mt-12">
       <h2 class="">Interactive small example</h2>
       <SectionEditor sectionName='sunburst-diagram' />
-
-    <SunBurstMovies></SunBurstMovies>
+      
+      <SunBurstMovies></SunBurstMovies>
     </div>
-
+    
     
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       <section id="implementation">
-      
+        
         <h2>Implementation</h2>
-      
+        
         <SectionEditor sectionName='implementation' />
       </section>
     </div>
-
+    
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       <section id="conclusion">
         
         <h2>Conclusion</h2>
         
         <SectionEditor sectionName='conclusion' />
-        </section>
+      </section>
     </div>
-
+    
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       <section id="extra-1">
         
@@ -208,7 +221,7 @@
         <SectionEditor sectionName='extra-1' />
       </section>
     </div>
-
+    
     <div class="bg-white p-6 rounded-lg shadow-sm mb-12">
       <section id="extra-2">
         
@@ -226,7 +239,13 @@
     </div>
 
   </div>
+  
+  
+</div>
+  </div>
+</div>
 
+</div>
 
 </div>
 
@@ -234,7 +253,7 @@
     h1 {
       @apply mt-0 mb-4 font-bold text-5xl mb-12;
     }
-
+    
     h2 {
       @apply mt-0 mb-4 font-bold text-2xl;
     }
@@ -249,5 +268,19 @@
     :global(body) {
       margin: 0;
       padding: 0;
+      overflow-x: hidden;
     }
+
+  .container {
+    min-height: 200vh; /* Makes sure we have enough scroll space */
+  }
+
+  .report-section {
+    background-color: gray 50;
+    padding: 4rem 2rem;
+    min-height: 100vh;
+    margin-top: 100vh; /* Push report below the video section */
+  }
+
+
   </style>

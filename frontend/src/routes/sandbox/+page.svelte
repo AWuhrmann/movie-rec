@@ -1,11 +1,14 @@
 <script lang="ts">
-	import ForceDirectedGraph from "../../components/ForceDirectedGraph.svelte";
-	import SunBurstMovies from "../../components/SunBurstMovies.svelte";
 	import ScrollReveal from "../../components/ScrollReveal.svelte";
-	import GlobeVisu from "../../components/GlobeVisu.svelte";
 	// import GraphComponent from "../../components/GraphComponent.svelte";
+    import VideoBackground from '../../components/Videobackground.svelte';
 
 
 </script>
-
-<GlobeVisu></GlobeVisu>
+<VideoBackground 
+videoSource="/images/matrix.mp4"
+blurAmount="5px"
+overlayOpacity="0.3"
+scaleAmount="1.9"    
+>
+</VideoBackground>

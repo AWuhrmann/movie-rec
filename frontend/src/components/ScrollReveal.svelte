@@ -1,147 +1,277 @@
-<!-- ContentZoom.svelte -->
 <script>
   import { onMount } from 'svelte';
-  
-  let mainContent;
-  let scrollY;
-  let windowHeight;
-  let scale = 0.3;
-  
-  const maxScale = 1;
-  const initialScale = 0.3;
-  const scrollDistance = 1000;
-  
-  onMount(() => {
-    windowHeight = window.innerHeight;
+
+  const movieData = {
+    "Inception": ["The Matrix", "Memento", "Interstellar"],
+    "Toy Story": ["Finding Nemo", "Monsters Inc", "WALL-E"],
+    "The Intouchables": ["The Green Book", "Life is Beautiful", "A Beautiful Mind"]
+  };
+
+  const texts = [
+    { type: 'static', text: "Second text appears" },
+    { type: 'static', text: "Third text shows up" },
+    { type: 'static', text: "Fourth text comes in" },
+    { type: 'static', text: "Fifth text arrives" }
+  ];
+
+  let typewriterText = '...';
+  let recommendationText = '';
+  let selectedMovie = '';
+  let recommendations = [];
+  let currentRecommendationIndex = 0;
+  let isTyping = false;
+
+  // Typewriter effect for movie title
+  async function typeWriter(movie) {
+    if (isTyping) return;
+    isTyping = true;
+    typewriterText = '';
     
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  });
-  
-  function handleScroll() {
-    scrollY = window.scrollY;
-    
-    if (scrollY <= scrollDistance) {
-      scale = initialScale + (maxScale - initialScale) * (scrollY / scrollDistance);
-    } else {
-      scale = maxScale;
+    for (let i = 0; i <= movie.length; i++) {
+      typewriterText = movie.substring(0, i);
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
+    
+    selectedMovie = movie;
+    recommendations = movieData[movie];
+    currentRecommendationIndex = 0;
+    typeRecommendation();
+    isTyping = false;
   }
 
-  $: isFullyZoomed = scrollY > scrollDistance;
+  // Typewriter effect for recommendations
+  async function typeRecommendation() {
+    if (!recommendations.length) return;
+    
+    let movieText = '';
+    const currentMovie = recommendations[currentRecommendationIndex];
+    
+    // Type the movie name
+    for (let i = 0; i <= currentMovie.length; i++) {
+      movieText = currentMovie.substring(0, i);
+      recommendationText = movieText;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    
+    // Wait before erasing
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Erase only the movie name
+    for (let i = currentMovie.length; i >= 0; i--) {
+      movieText = currentMovie.substring(0, i);
+      recommendationText = movieText;
+      await new Promise(resolve => setTimeout(resolve, 30));
+    }
+    
+    // Move to next recommendation
+    currentRecommendationIndex = (currentRecommendationIndex + 1) % recommendations.length;
+    typeRecommendation();
+  }
+
+  function selectMovie(movie) {
+    typeWriter(movie);
+  }
+
+  let sections = [];
+
+  onMount(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          const section = entry.target;
+          if (entry.isIntersecting) {
+            section.style.opacity = '1';
+            section.style.transform = 'translateY(0)';
+          } else {
+            const direction = (section.getBoundingClientRect().top < 0) ? '-20px' : '20px';
+            section.style.opacity = '0';
+            section.style.transform = `translateY(${direction})`;
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '-20% 0px',
+        threshold: 0.1
+      }
+    );
+
+    sections = document.querySelectorAll('.scroll-section');
+    sections.forEach(section => observer.observe(section));
+
+    return () => {
+      sections.forEach(section => observer.unobserve(section));
+    };
+  });
 </script>
 
 <style>
-  .container {
-    /* Much taller to allow for content scrolling */
-    min-height: 400vh;
-    background: #f5f5f5;
+  /* Reset styles to prevent interference */
+  :global(body),
+  :global(html) {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
   }
-  
-  .zoom-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
+
+  /* Reset any unwanted margins/paddings */
+  :global(*) {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* Main styles */
+  .container {
+    min-height: 100vh;
+    padding: 10vh 0;
+    position: relative;
     width: 100%;
+    max-width: 100vw;
+    margin: 0;
+    overflow-x: hidden;
+    background: white;  /* or any background you prefer */
+    overflow-y: hidden;
+  }
+
+  .movie-section {
     height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 4rem;
+    padding-top: 0;
+  }
+
+  .top-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .movie-options {
+    display: flex;
+    gap: 1rem;
+    margin-left: 2rem;
+  }
+
+  .movie-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #333;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+  }
+
+  .movie-button:hover {
+    background-color: #333;
+    color: white;
+  }
+
+  .typewriter-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .typewriter-prefix {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-right: 0.5rem;
+  }
+
+  .typewriter-text {
+    font-size: 3.5rem;
+    font-weight: 700;
+    min-width: 2ch;
+    border-right: 0.15em solid #333;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: blink-caret 0.75s step-end infinite;
+  }
+
+  .recommendations {
+    align-self: flex-end;
+    padding-bottom: 15vh;
+    font-size: 3.5rem;
+    font-weight: 700;
+    text-align: right;
+    min-height: 4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .static-text {
+    white-space: nowrap;
+  }
+
+  .recommendation-text {
+    border-right: 0.15em solid #333;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: blink-caret 0.75s step-end infinite;
+    min-width: 1ch;
+  }
+
+  .scroll-section {
+    height: 50vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    pointer-events: none; /* Allows scrolling through when fixed */
-  }
-  
-  .content {
-    width: 90%;
-    max-width: 1200px;
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    transform-origin: center center;
-    transition: transform 0.1s ease-out;
-  }
-  
-  .scroll-section {
-    position: absolute;
-    top: 100vh; /* Start after first viewport */
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: 
+      opacity 0.6s ease-out,
+      transform 0.6s ease-out;
   }
 
-  .card {
-    background: #f0f0f0;
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
+  .text {
+    font-size: 2rem;
+    text-align: center;
+    color: #333;
+    padding: 1rem;
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin: 2rem 0;
+  @keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: #333 }
   }
 </style>
 
 <div class="container">
-  <!-- Zoom effect section -->
-  <div class="zoom-wrapper" style="opacity: {isFullyZoomed ? 0 : 1}">
-    <div class="content" style="transform: scale({scale})">
-      <!-- Initial view content -->
-      <h1>Welcome to My Website</h1>
-      <p class="card">Start scrolling to zoom in and explore more content!</p>
-    </div>
-  </div>
-  
-  <!-- Scrollable content -->
-  <div class="scroll-section">
-    <div class="content" style="opacity: {isFullyZoomed ? 1 : 0}">
-      <h1>Welcome to My Website</h1>
-      
-      <p class="card">Start scrolling to zoom in and explore more content!</p>
-      
-      <h2>Featured Sections</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Section 1</h3>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</p>
-        </div>
-        <div class="card">
-          <h3>Section 2</h3>
-          <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo.</p>
-        </div>
+  <!-- Movie recommendation section -->
+  <div class="movie-section">
+    <div class="top-content">
+      <div class="typewriter-container">
+        <span class="typewriter-prefix">I liked</span>
+        <span class="typewriter-text">{typewriterText}</span>
       </div>
-      
-      <h2>More Content</h2>
-      <div class="card">
-        <h3>Deep Dive</h3>
-        <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
-        <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-      </div>
-      
-      <h2>Additional Sections</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Section 3</h3>
-          <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.</p>
-        </div>
-        <div class="card">
-          <h3>Section 4</h3>
-          <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur.</p>
-        </div>
-      </div>
-      
-      <h2>Final Thoughts</h2>
-      <div class="card">
-        <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum.</p>
-        <p>Deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.</p>
+      <div class="movie-options">
+        {#each Object.keys(movieData) as movie}
+          <button 
+            class="movie-button" 
+            on:click={() => selectMovie(movie)}
+          >
+            {movie}
+          </button>
+        {/each}
       </div>
     </div>
+    
+    {#if selectedMovie && recommendations.length > 0}
+      <div class="recommendations">
+        <span class="static-text">Have you watched </span>
+        <span class="recommendation-text">{recommendationText}</span>
+        <span class="static-text">?</span>
+      </div>
+    {/if}
   </div>
+
+  <!-- Scrolling sections -->
+  {#each texts as section}
+    <div class="scroll-section">
+      <p class="text">{section.text}</p>
+    </div>
+  {/each}
 </div>
