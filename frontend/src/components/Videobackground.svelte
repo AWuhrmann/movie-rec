@@ -28,7 +28,7 @@
   onMount(() => {
     const handleScroll = () => {
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      scrollProgress = Math.min(Math.max(window.scrollY / (maxScroll * 0.15), 0), 1);
+      scrollProgress = Math.min(Math.max(window.scrollY / (window.innerHeight), 0), 1);
     };
 
     window.addEventListener('scroll', handleScroll);
